@@ -14,8 +14,6 @@ Reports we want to hear about include:
 
 Please use GitHub's **private vulnerability reporting** on this repository (Security tab, "Report a vulnerability"). Do not open a public issue describing a security problem. Include what you found, how to reproduce it, and the version.
 
-If that option does not appear, open a public issue that says only "security report, please contact me" with no technical details, and a maintainer will arrange a private channel.
-
 We will acknowledge a report as soon as we reasonably can. This is a volunteer-maintained project, so we cannot promise a fixed response time.
 
 ## Assessment files are sensitive

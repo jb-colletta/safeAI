@@ -15,7 +15,7 @@ It works for an organization that *uses* AI tools, for a team that *builds* AI f
 
 ## Try it in 5 minutes
 
-**In your browser, nothing to install:** open [`web/index.html`](web/index.html) (download it, double-click it). Your answers stay in your browser. Nothing is uploaded.
+**In your browser, nothing to install:** [open the tool](https://jb-colletta.github.io/safeAI/), or download [`web/index.html`](web/index.html) and double-click it. Your answers stay in your browser. Nothing is uploaded.
 
 **From the command line** (Python 3.9+ and PyYAML):
 
@@ -63,6 +63,14 @@ Eleven of the controls form a **human-dignity floor**. They say that people, not
 
 If the floor is not met, your overall rating is held at *Developing* however well the rest scores. Beyond the floor, your organization writes its own mission and values along the seven levels (Level 5). The floor can be raised but never lowered. See [docs/floor.md](docs/floor.md), including what it does *not* claim.
 
+## Templates and vendor questions
+
+- [`templates/ai-use-policy.md`](templates/ai-use-policy.md): a fill-in-the-blank AI use policy, one section per level. Each clause names its control and the kind of guarantee it can honestly be. Delete any clause you are not prepared to follow.
+- [`templates/ai-incident-response.md`](templates/ai-incident-response.md): a one-to-two page note for when an AI does something it should not.
+- `safeai vendor-questions -o questions.md`: the questions to send an AI vendor, each tied to the controls it helps you answer, with what a good answer and a worrying one look like.
+
+These are starting points, not legal advice.
+
 ## Repository map
 
 | Path | What it is |
@@ -70,8 +78,9 @@ If the floor is not met, your overall rating is held at *Developing* however wel
 | `src/safeai/data/safeai-framework.yaml` | The framework: levels, guarantee types, and every control. The single source of truth. |
 | `src/safeai/` | Python package and `safeai` command |
 | `web/` | Browser tool (`index.html` is built from `index.template.html` + `scoring.js` + the framework) |
+| `templates/` | Fill-in-the-blank AI use policy and incident response note |
 | `examples/` | A fictional assessment and its generated report |
-| `docs/` | [Framework](docs/framework.md) · [Human-dignity floor](docs/floor.md) · [Using the tool](docs/using-the-tool.md) · [Scoring](docs/scoring.md) · [Honest claims](docs/honest-claims.md) · [References](docs/references.md) · [Roadmap](docs/roadmap.md) |
+| `docs/` | [Framework](docs/framework.md) · [Human-dignity floor](docs/floor.md) · [Using the tool](docs/using-the-tool.md) · [Scoring](docs/scoring.md) · [Honest claims](docs/honest-claims.md) · [Getting it reviewed](docs/expert-review.md) · [References](docs/references.md) · [Roadmap](docs/roadmap.md) |
 | `tests/` | Unit tests, including a check that the browser and Python scorers agree |
 
 ## What this is not

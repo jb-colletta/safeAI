@@ -9,11 +9,12 @@ This is a list of intentions, not promises. Nothing here exists yet. Following o
 - Command-line tool: `init`, `check`, `report`, `plan`, `diff`
 - Browser tool that stores nothing outside your browser
 - Fictional example assessment and report
+- Fill-in-the-blank AI use policy and AI incident response note (`templates/`)
+- Vendor questionnaire export: `safeai vendor-questions`
 
 ## Ideas under consideration
 
-- **Policy templates.** Fill-in-the-blank starting points for an AI acceptable-use policy, a vendor questionnaire, and an incident response note, one per level.
-- **Vendor questionnaire export.** A ready list of the questions to send an AI vendor, generated from levels 2 and 7.
+- **More templates.** The current policy covers all seven levels in one document. Separate one-page templates (for example a data-handling guide for staff, or a public statement about AI use) may follow.
 - **Mappings to other frameworks.** An optional file that maps each control to related items in widely used frameworks, so a result can be reused for funder or insurer forms. Needs careful, checked sourcing before it is added.
 - **Translations** of the framework and browser tool.
 - **Sector packs.** Optional extra controls for specific sectors (for example, health or youth services), kept separate so the core stays generic.

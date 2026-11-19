@@ -34,6 +34,7 @@ safeai report assessment.yaml -f html -o report.html
 safeai plan   assessment.yaml -o plan.md
 safeai report assessment.yaml --strict      # count unanswered as "none"
 safeai controls --layer 4 --mode organization   # browse the controls
+safeai vendor-questions --vendor "Example" -o vendor-questions.md   # questions to send an AI vendor
 ```
 
 ### Track progress in git

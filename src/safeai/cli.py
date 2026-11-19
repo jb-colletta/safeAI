@@ -12,6 +12,7 @@ from .assessment import load_assessment, make_template
 from .framework import FrameworkError, default_path, load_framework, validate_framework
 from .report import diff_to_markdown, plan_to_markdown, to_html, to_json, to_markdown
 from .scoring import compare, compute, make_plan, validate_assessment
+from . import vendor
 
 import yaml
 
@@ -115,6 +116,17 @@ def cmd_framework_check(args, framework) -> int:
     return 0
 
 
+def cmd_vendor_questions(args, framework) -> int:
+    data = vendor.load_questionnaire()
+    problems = vendor.validate_questionnaire(data, framework)
+    if problems:
+        for p in problems:
+            print(f"  - {p}", file=sys.stderr)
+        return 1
+    _write(vendor.to_markdown(data, vendor_name=args.vendor or ""), args.output)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="safeai",
@@ -159,6 +171,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("-o", "--output")
     s.add_argument("--strict", action="store_true")
     s.set_defaults(func=cmd_diff)
+
+    s = sub.add_parser("vendor-questions", help="write the questions to send an AI vendor")
+    s.add_argument("--vendor", help="name of the vendor, for the heading")
+    s.add_argument("-o", "--output")
+    s.set_defaults(func=cmd_vendor_questions)
 
     s = sub.add_parser("framework-check", help="validate a framework file (for contributors)")
     s.add_argument("path", nargs="?", help="framework YAML (default: the bundled one)")

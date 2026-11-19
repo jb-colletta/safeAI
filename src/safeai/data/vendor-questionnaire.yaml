@@ -1,0 +1,186 @@
+# Questions to send to an AI vendor or to a software provider that builds AI into the product
+# you use. Each question points at the framework control(s) it helps you answer.
+#
+# Rules for editing this file:
+#   - Keep it generic. No vendor or product names.
+#   - Do not name standards, laws, or certifications unless someone has checked the exact
+#     name and wording against the source. "An independent audit report, if you have one" is fine.
+#   - `look_for` describes what a documented, specific answer looks like.
+#     `red_flag` describes answers that should lower your confidence.
+#
+# Fields: id, topic, controls (framework control ids), ask, look_for, red_flag
+
+intro: >
+  A vendor's answer is a claim until it is written down in a contract, a published policy, or a
+  document you can keep. Ask for the document. For every capability, also ask the question that
+  separates the three kinds of guarantee: is this enforced by the product itself (structural),
+  does it need a named person to approve it (procedural), or does it depend on the AI following
+  instructions (guided)? Record the answer in your assessment as that kind, with the document as
+  evidence.
+
+topics:
+  - id: data
+    name: Your data
+  - id: vendor
+    name: The vendor and the model
+  - id: control
+    name: What the AI can do
+  - id: people
+    name: People who need extra care
+  - id: accountability
+    name: Records, stopping, and accountability
+
+questions:
+  - id: V01
+    topic: data
+    controls: [L2.01]
+    ask: Do you use our content (prompts, outputs, uploaded files) to train or improve any model? Does the answer differ by account or plan type? Where is that written?
+    look_for: A plain yes or no for each account type, in a contract or published terms you can keep.
+    red_flag: "\"It depends\", or an answer given only in conversation."
+
+  - id: V02
+    topic: data
+    controls: [L2.01, L1.07]
+    ask: How long do you keep our prompts, outputs, and logs? Can we set the period ourselves, including the shortest available? How do we delete data, and how do we confirm it is gone?
+    look_for: Stated retention periods, a setting we control, and a described deletion process.
+    red_flag: No stated period, or deletion that cannot be confirmed.
+
+  - id: V03
+    topic: data
+    controls: [L2.01]
+    ask: Can your staff or contractors ever read our content? Under what conditions, and can we opt out?
+    look_for: A short list of named conditions, such as abuse investigation, and a documented opt-out where one exists.
+    red_flag: Human review that is not mentioned in the terms.
+
+  - id: V04
+    topic: data
+    controls: [L1.07, L1.02]
+    ask: Do your integrations store copies of our records, or do they pass data through and keep only what is needed? What exactly is stored, and where?
+    look_for: A list of what is stored and why, and an option to keep nothing beyond the request.
+    red_flag: A full copy of our records held by default.
+
+  - id: V05
+    topic: vendor
+    controls: [L2.03]
+    ask: Which AI models and which other companies (sub-processors) handle our data, and in which countries is it processed and stored? How will you tell us when that changes?
+    look_for: A current list, a stated notice period for changes, and a way to object.
+    red_flag: A model or sub-processor list that cannot be produced.
+
+  - id: V06
+    topic: vendor
+    controls: [L2.04]
+    ask: Does the contract cover confidentiality, data processing, how quickly you notify us of a breach, and deletion of our data when we leave?
+    look_for: Each of the four in writing, with a stated notification time.
+    red_flag: Any of the four missing, or "best efforts" with no timeframe.
+
+  - id: V07
+    topic: vendor
+    controls: [L2.02]
+    ask: Can we manage accounts centrally (add and remove seats, set options for everyone, remove access when someone leaves) instead of relying on staff personal logins?
+    look_for: An administrator console and a described offboarding step.
+    red_flag: Only individual accounts, with no central control.
+
+  - id: V08
+    topic: vendor
+    controls: [L2.05]
+    ask: What safety rules and published values does the underlying model operate under, and where are they documented?
+    look_for: A published document you can read and give to your leadership.
+    red_flag: Only marketing language.
+
+  - id: V09
+    topic: vendor
+    controls: [L2.08]
+    ask: How will you tell us before a model is changed, replaced, or retired, or before terms change? Can we keep a specific model version for a period?
+    look_for: Advance notice with a stated period, and version pinning or a defined overlap.
+    red_flag: Silent model changes.
+
+  - id: V10
+    topic: vendor
+    controls: [L2.07]
+    ask: What do you publish about energy and water use, and about the working conditions of the people who label data and moderate content?
+    look_for: Published figures or a statement with a date, and an honest "we do not publish this" where that is true.
+    red_flag: Claims with no source.
+
+  - id: V11
+    topic: control
+    controls: [L1.02, L3.01]
+    ask: When the AI reads or changes records, does it use the signed-in person's own permissions, or a shared account with broader access?
+    look_for: Per-user permissions carried through to every action.
+    red_flag: A shared service account that can see everything.
+
+  - id: V12
+    topic: control
+    controls: [L3.01, L3.02, L3.03, L3.04]
+    ask: Can we restrict, per role, which actions the AI may take (read, create, update, send, delete)? Can we require a person to approve sending or deleting, and are deletions, bulk messages, and payments always held for a person? Is each of these enforced by the product, or does it depend on the AI following instructions?
+    look_for: Settings we control, described as enforced by the product, with a demonstration.
+    red_flag: Controls that exist only as wording in the AI's instructions.
+
+  - id: V13
+    topic: control
+    controls: [L3.07]
+    ask: How does the product treat content from outside (uploaded files, inbound email, web pages) that might contain hidden instructions? What limits apply to the AI after it reads such content?
+    look_for: A described design, such as separating untrusted content or limiting actions after reading it, plus a statement of its limits.
+    red_flag: "\"The model is trained to ignore that\" as the only answer."
+
+  - id: V14
+    topic: control
+    controls: [L3.08]
+    ask: Can we set hard limits on recipients per message, records changed per run, and spend per period?
+    look_for: Limits we can set and that the product enforces.
+    red_flag: No limits, or limits only the vendor can change.
+
+  - id: V15
+    topic: people
+    controls: [L4.02, L4.03, L4.11]
+    ask: What default protections exist for children and other vulnerable people? Are they on by default, and can an administrator only strengthen them, never weaken them? How does the product handle photos and identifying details of children?
+    look_for: Protections enabled by default and a described rule that settings can only be raised.
+    red_flag: Protections that are optional or that an administrator can switch off.
+
+  - id: V16
+    topic: people
+    controls: [L4.07, L4.09, L4.12, L7.09]
+    ask: Does the product produce any score, ranking, or label about a person? If so, can staff see it and the reasons for it, and can a decision informed by it be reconstructed and reviewed by a person?
+    look_for: Visible scores with explanations, and a record that supports human review.
+    red_flag: Hidden scores, or scores that cannot be explained.
+
+  - id: V17
+    topic: people
+    controls: [L6.02, L6.08]
+    ask: For public-facing assistants, does the assistant say it is an AI, and is AI-drafted content labeled where we need it to be? Can a person always reach a human easily?
+    look_for: Disclosure we cannot switch off by accident, and a documented route to a person.
+    red_flag: An assistant that presents itself as a named person.
+
+  - id: V18
+    topic: accountability
+    controls: [L7.05, L7.06]
+    ask: What does your audit log record (who used which tool, inputs, actions, outcome, who granted the permission, whether a person overrode a decision)? How long is it kept, and can we export it?
+    look_for: A described record that includes authority, not only activity, and a way to export it.
+    red_flag: Activity counts with no per-action detail.
+
+  - id: V19
+    topic: accountability
+    controls: [L7.07]
+    ask: Can an administrator switch AI access off immediately, for one user, one tool, or everything?
+    look_for: A switch we control, with a described effect and speed.
+    red_flag: Switching off requires a support ticket.
+
+  - id: V20
+    topic: accountability
+    controls: [L7.08]
+    ask: How will you tell us about an incident that affects us, who is our contact, and have you disclosed past incidents and what changed afterward?
+    look_for: A named process, a notification time, and a disclosure history, including "none" where true.
+    red_flag: No process, or a refusal to discuss history.
+
+  - id: V21
+    topic: accountability
+    controls: [L7.04]
+    ask: In writing, what do you answer for, and what do we answer for, when something goes wrong with this product?
+    look_for: A clear split in the contract or documentation.
+    red_flag: Everything placed on the customer.
+
+  - id: V22
+    topic: accountability
+    controls: [L7.13, L5.07]
+    ask: Have you tested your safeguards with deliberate attempts to break them, including instructions hidden in documents? Will you share a summary of what was found and fixed?
+    look_for: A described testing practice and a willingness to share a summary or an independent report, if one exists.
+    red_flag: No testing, or a refusal to say anything about it.
