@@ -29,6 +29,7 @@ Rules for controls:
 pip install -e ".[dev]"
 pytest                          # all tests must pass
 python scripts/build_web.py     # rebuild web/index.html after changing the framework, scoring.js, or the template
+python scripts/build_ontology.py  # rebuild web/safeai.ttl after changing the framework
 ```
 
 The test suite checks that the browser and Python scorers produce identical results, so change `scoring.js` and `scoring.py` together.

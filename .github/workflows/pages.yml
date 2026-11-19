@@ -1,6 +1,7 @@
 name: pages
 
-# Publishes the browser tool (web/index.html) as a GitHub Pages site.
+# Publishes the browser tool (web/index.html) and the framework ontology
+# (web/safeai.ttl) as a GitHub Pages site.
 # Requires Settings > Pages > Source: GitHub Actions.
 
 on:
@@ -28,10 +29,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Stage only the self-contained browser tool
+      - name: Stage the self-contained browser tool and the ontology
         run: |
           mkdir _site
           cp web/index.html _site/index.html
+          cp web/safeai.ttl _site/safeai.ttl
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
