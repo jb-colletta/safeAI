@@ -13,7 +13,7 @@ dependencies = ["PyYAML>=5.4"]
 keywords = ["ai-safety", "nonprofit", "governance", "risk-assessment"]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "rdflib>=7"]
 
 [project.scripts]
 safeai = "safeai.cli:main"

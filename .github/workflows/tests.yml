@@ -26,3 +26,7 @@ jobs:
         run: |
           python scripts/build_web.py
           git diff --exit-code web/index.html
+      - name: Ontology is up to date with the framework
+        run: |
+          python scripts/build_ontology.py
+          git diff --exit-code web/safeai.ttl

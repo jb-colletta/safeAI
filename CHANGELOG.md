@@ -2,6 +2,10 @@
 
 All notable changes are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+- The framework is also published as an OWL ontology in Turtle (`web/safeai.ttl`), generated from the YAML by `scripts/build_ontology.py`. Every level and control has its own IRI, provisional until version 1.0. See [docs/ontology.md](docs/ontology.md).
+
 ## 0.1.0 (first release)
 
 - Seven levels and 70 controls, each with a question, steps, evidence, severity, effort, and the highest honest guarantee type (structural, procedural, or guided).
