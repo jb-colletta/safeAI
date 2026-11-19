@@ -59,6 +59,7 @@ nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accen
 .legend b{display:block}
 .level{margin-top:2rem}
 .level header{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:baseline;justify-content:space-between}
+.chip.floor{color:var(--fg);border-color:var(--fg)}
 .chip{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.04em;border:1px solid var(--line);border-radius:99px;padding:.05rem .55rem;color:var(--muted)}
 .control{margin-top:.75rem}
 .control .head{display:flex;flex-wrap:wrap;gap:.25rem .75rem;align-items:baseline;justify-content:space-between}
@@ -220,7 +221,7 @@ footer{margin:3rem 0 2rem;color:var(--muted);font-size:.875rem}
         (disabled ? ' title="This control cannot be enforced more strongly than ' + c.max_guarantee + '"' : '') + '>' + GLABEL[k] + '</span></label>';
     }).join('');
     return '<article class="card control" id="c-' + c.id + '">' +
-      '<div class="head"><h3><span class="cid">' + c.id + '</span>' + esc(c.title) + '</h3>' +
+      '<div class="head"><h3><span class="cid">' + c.id + '</span>' + esc(c.title) + (c.floor ? ' <span class="chip floor" title="Part of the human-dignity floor: ' + esc(c.floor_principle || '') + '">Floor</span>' : '') + '</h3>' +
       '<span><span class="sev ' + c.severity + '">' + c.severity + '</span></span></div>' +
       '<p>' + esc(c.question) + '</p>' +
       '<fieldset><legend>Answer for ' + esc(c.title) + '</legend>' + opts +
@@ -257,7 +258,8 @@ footer{margin:3rem 0 2rem;color:var(--muted);font-size:.875rem}
     var prov = !state.strict && cov.percent !== null && cov.percent < 50;
     $('summary').innerHTML = '<div class="wrap" style="padding:0"><div class="row">' +
       '<div><div class="score">' + (o.score === null ? 'n/a' : S.fmt(o.score)) + '<span class="muted small"> / 100</span></div>' +
-      '<div class="band small">' + (o.band ? (prov ? 'Provisional: fewer than half answered' : o.band + ' · indicative') : 'No answers yet') + '</div></div>' +
+      '<div class="band small">' + (o.band ? (prov ? 'Provisional: fewer than half answered' : o.band + ' · indicative') : 'No answers yet') + '</div>' +
+      (o.gated ? '<div class="small" style="font-weight:600">Held at ' + o.band + ': the human-dignity floor is ' + (x.floor.status === 'not_met' ? 'not met' : 'not yet confirmed') + '</div>' : '') + '</div>' +
       '<div class="meter" role="img" aria-label="Overall score"><span style="width:' + pctWidth + '%"></span></div>' +
       '<div class="small muted">' + cov.answered + ' of ' + cov.applicable + ' answered' + (state.strict ? '' : ' (unanswered left out of score)') + '</div>' +
       '</div></div>';
@@ -287,6 +289,17 @@ footer{margin:3rem 0 2rem;color:var(--muted);font-size:.875rem}
     h += '<div class="say-not" style="margin-top:.75rem"><div class="card"><b>Say</b><ul><li>"Enforced in code" only for controls you answered Structural, with evidence.</li><li>"Requires approval" for Procedural controls.</li><li>"Recommended" for Guided controls.</li><li>"Here is what is in place and what is coming", with dates only once committed.</li></ul></div>' +
       '<div class="card"><b>Do not say</b><ul><li>"100% safe", "provably ethical", or "AI you never have to check".</li><li>"Enforced" for anything that depends on the AI following instructions.</li><li>Roadmap items in the present tense.</li><li>"Your data is never used for training" without naming the account type it depends on.</li></ul></div></div>';
 
+    if (x.floor.status !== 'none') {
+      h += '<h2>The human-dignity floor</h2><div class="' + (x.floor.status === 'met' ? 'card' : 'warn') + '"><p style="margin-top:0">' + esc(S.FLOOR_TEXT[x.floor.status].replace(/\*\*/g, '')) + '</p>' +
+        (x.overall.gated ? '<p><b>Rating held at ' + esc(x.overall.band) + '.</b> Without the floor it would be ' + esc(x.overall.ungated_band) + '.</p>' : '') +
+        '<table><thead><tr><th>ID</th><th>What it protects</th><th>Your answer</th><th>Floor</th></tr></thead><tbody>' +
+        x.floor.controls.map(function (i) {
+          return '<tr><td>' + i.id + '</td><td>' + esc(i.principle) + '</td><td>' + esc(S.ANSWER_LABEL[i.answer]) + '</td><td>' + S.FLOOR_STATE[i.state] + '</td></tr>';
+        }).join('') + '</tbody></table>' +
+        (x.floor.not_applicable.length ? '<p class="small">Marked not applicable (confirm that each really does not apply to you): ' + x.floor.not_applicable.join(', ') + '.</p>' : '') +
+        '</div>';
+    }
+
     h += '<h2>The seven levels</h2><div class="card" style="overflow-x:auto"><table><thead><tr><th>Level</th><th class="num">Score</th><th>Mix of guarantees</th><th class="num">Not answered</th></tr></thead><tbody>' +
       x.layers.map(function (l) {
         return '<tr><td>L' + l.number + ' ' + esc(l.name) + ' <span class="chip">' + l.verb + '</span></td><td class="num">' + S.fmt(l.score) + '</td><td>' + stackHtml(l.counts) + '</td><td class="num">' + l.counts.unanswered + '</td></tr>';
@@ -315,6 +328,10 @@ footer{margin:3rem 0 2rem;color:var(--muted);font-size:.875rem}
     FW.controls.forEach(function (c) { byId[c.id] = c; });
     var h = '<h2>Action plan</h2><p class="small muted">Tick items off as you finish them, then update the control\'s answer on the Assess tab and compare your score.</p>';
     if (!p.count) { $('plan').innerHTML = h + '<p>No gaps found among the controls you answered. Keep your evidence current.</p>'; return; }
+    if (p.floor.length) {
+      h += '<h2>Human-dignity floor first</h2><div class="card"><ul class="steps">' + p.floor.map(function (i) {
+        return '<li><b>' + i.id + ' ' + esc(i.title) + '</b>: ' + esc(S.move(i)) + '</li>'; }).join('') + '</ul></div>';
+    }
     var crit = p.critical.filter(function (i) { return ['none', 'unanswered', 'guided'].indexOf(i.current) !== -1; });
     if (crit.length) {
       h += '<h2>Critical gaps first</h2><div class="card"><ul class="steps">' + crit.map(function (i) {

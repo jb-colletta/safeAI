@@ -11,6 +11,8 @@
   var WEIGHT = { critical: 3, high: 2, medium: 1 };
   var COST = { low: 1, medium: 2, high: 3 };
   var BANDS = [[90, 'Leading'], [75, 'Strong'], [50, 'Developing'], [25, 'Basic'], [0, 'Exposed']];
+  var FLOOR_MIN_LEVEL = 2;
+  var GATED_BAND = 'Developing';
   var ANSWERS = ['none', 'guided', 'procedural', 'structural', 'na'];
   var VERB_CLAUSES = {
     SEE: 'It sees only what your people are already allowed to see, minus what you wall off.',
@@ -40,6 +42,11 @@
     if (score === null) return null;
     for (var i = 0; i < BANDS.length; i++) if (score >= BANDS[i][0]) return BANDS[i][1];
     return BANDS[BANDS.length - 1][1];
+  }
+
+  function bandRank(name) {
+    for (var i = 0; i < BANDS.length; i++) if (BANDS[i][1] === name) return BANDS.length - 1 - i;
+    return -1;
   }
 
   function applies(control, mode) {
@@ -77,7 +84,7 @@
       var target = RANK[control.max_guarantee];
       var row = {
         id: control.id, layer: control.layer, title: control.title,
-        severity: control.severity, effort: control.effort, quick_win: !!control.quick_win,
+        severity: control.severity, effort: control.effort, quick_win: !!control.quick_win, floor: !!control.floor,
         max_guarantee: control.max_guarantee, target: target, answer: ans,
         note: entry.note || '', evidence: entry.evidence || '',
         weight: WEIGHT[control.severity], level: null, score: null,
@@ -134,7 +141,12 @@
     var scoredAll = rows.filter(function (r) { return r.status === 'scored'; });
     var os = weighted(scoredAll);
     var overall = { score: os === null ? null : pct(os) };
-    overall.band = bandFor(overall.score);
+    overall.ungated_band = bandFor(overall.score);
+    var floor = floorSummary(framework, rows);
+    overall.gated = !!(overall.ungated_band !== null &&
+      (floor.status === 'not_met' || floor.status === 'unconfirmed') &&
+      bandRank(overall.ungated_band) > bandRank(GATED_BAND));
+    overall.band = overall.gated ? GATED_BAND : overall.ungated_band;
 
     var applicable = rows.filter(function (r) { return r.status !== 'na'; });
     var coverage = {
@@ -147,10 +159,26 @@
 
     return {
       framework_version: framework.version, scope: scope, strict: !!strict,
-      coverage: coverage, overall: overall, layers: layers, verbs: verbs, controls: rows,
+      coverage: coverage, overall: overall, floor: floor, layers: layers, verbs: verbs, controls: rows,
       unevidenced: rows.filter(function (r) { return r.unevidenced; }).map(function (r) { return r.id; }),
       capped: rows.filter(function (r) { return r.capped; }).map(function (r) { return r.id; })
     };
+  }
+
+  function floorSummary(framework, rows) {
+    var principles = {};
+    framework.controls.forEach(function (c) { principles[c.id] = c.floor_principle || ''; });
+    var items = rows.filter(function (r) { return r.floor; }).map(function (r) {
+      var state;
+      if (r.status === 'na') state = 'na';
+      else if (r.status === 'scored') state = r.level >= FLOOR_MIN_LEVEL ? 'met' : 'not_met';
+      else state = 'unconfirmed';
+      return { id: r.id, title: r.title, principle: principles[r.id] || '', answer: r.answer, state: state };
+    });
+    function ids(st) { return items.filter(function (i) { return i.state === st; }).map(function (i) { return i.id; }); }
+    var notMet = ids('not_met'), unconfirmed = ids('unconfirmed');
+    var status = !items.length ? 'none' : notMet.length ? 'not_met' : unconfirmed.length ? 'unconfirmed' : 'met';
+    return { status: status, controls: items, not_met: notMet, unconfirmed: unconfirmed, not_applicable: ids('na') };
   }
 
   function makePlan(result) {
@@ -180,7 +208,14 @@
       if (fa !== fb) return fb - fa;
       return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
     });
+    var floorIds = {};
+    result.floor.controls.forEach(function (i) {
+      if (i.state === 'not_met' || i.state === 'unconfirmed') floorIds[i.id] = true;
+    });
+    var floorFirst = items.filter(function (i) { return floorIds[i.id]; });
+    floorFirst.sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
     return {
+      floor: floorFirst,
       critical: critical,
       horizons: {
         quick: items.filter(function (i) { return i.effort === 'low'; }),
@@ -281,6 +316,28 @@
     return 'currently ' + i.current + ', next step ' + i.next + ' (target: ' + i.target + ')';
   }
 
+  var FLOOR_STATE = { met: 'Met', not_met: 'Not met', unconfirmed: 'Not assessed', na: 'N/A' };
+  var FLOOR_TEXT = {
+    met: 'Every floor control is reported at procedural or stronger. This is a self-reported result, not a certification, and it does not show that the AI itself behaves well.',
+    not_met: 'The floor is **not met**. At least one floor control is answered below procedural. Close these before anything else.',
+    unconfirmed: 'The floor is **not yet confirmed**. Some floor controls are unanswered. Answer them before relying on any rating.'
+  };
+
+  function floorMarkdown(floor) {
+    var L = [];
+    if (floor.status === 'none') return L;
+    L.push('## The human-dignity floor', '', FLOOR_TEXT[floor.status], '');
+    L.push('| ID | What it protects | Control | Your answer | Floor |', '|---|---|---|---|---|');
+    floor.controls.forEach(function (i) {
+      L.push('| ' + i.id + ' | ' + i.principle + ' | ' + i.title + ' | ' + ANSWER_LABEL[i.answer] + ' | ' + FLOOR_STATE[i.state] + ' |');
+    });
+    L.push('');
+    if (floor.not_applicable.length) {
+      L.push('Marked not applicable (confirm that each really does not apply to you): ' + floor.not_applicable.join(', ') + '.', '');
+    }
+    return L;
+  }
+
   function toMarkdown(result, plan, framework) {
     var byId = {};
     framework.controls.forEach(function (c) { byId[c.id] = c; });
@@ -295,6 +352,11 @@
     L.push(meta.join(' · '), '', '> ' + DISCLAIMER, '', '## Summary', '');
     L.push(o.score === null ? 'No controls have been answered yet, so there is no score.'
       : '**Overall: ' + fmt(o.score) + ' / 100 (' + o.band + ')**', '');
+    if (o.gated) {
+      L.push('**Held at ' + o.band + ':** the human-dignity floor is ' +
+        (result.floor.status === 'not_met' ? 'not met' : 'not yet confirmed') +
+        '. Without that, the rating would be ' + o.ungated_band + '.', '');
+    }
     if (o.score !== null && !result.strict && cov.percent !== null && cov.percent < 50) {
       L.push('**Provisional:** fewer than half of the applicable controls have been answered.', '');
     }
@@ -311,6 +373,7 @@
     });
     L.push('', 'Only describe a control as *enforced* if you answered `structural` and can show the evidence. ' +
       'Describe `procedural` as *requiring approval* and `guided` as *recommended*.', '');
+    floorMarkdown(result.floor).forEach(function (x) { L.push(x); });
     L.push('## The seven levels', '');
     L.push('| Level | Score | Structural | Procedural | Guided | None | Not assessed |', '|---|---:|---:|---:|---:|---:|---:|');
     result.layers.forEach(function (l) {
@@ -329,6 +392,11 @@
     if (!plan.count) {
       L.push('No gaps found among the controls you answered. Keep your evidence current.', '');
     } else {
+      if (plan.floor.length) {
+        L.push('### Human-dignity floor first', '');
+        plan.floor.forEach(function (i) { L.push('- **' + i.id + ' ' + i.title + '**: ' + move(i)); });
+        L.push('');
+      }
       var crit = plan.critical.filter(function (i) { return ['none', 'unanswered', 'guided'].indexOf(i.current) !== -1; });
       if (crit.length) {
         L.push('### Critical gaps first', '');
@@ -357,7 +425,7 @@
 
   var api = {
     RANK: RANK, RANK_NAME: RANK_NAME, ANSWERS: ANSWERS, STATUS_TEXT: STATUS_TEXT,
-    ANSWER_LABEL: ANSWER_LABEL, DISCLAIMER: DISCLAIMER, VERB_CLAUSES: VERB_CLAUSES,
+    ANSWER_LABEL: ANSWER_LABEL, FLOOR_STATE: FLOOR_STATE, FLOOR_TEXT: FLOOR_TEXT, DISCLAIMER: DISCLAIMER, VERB_CLAUSES: VERB_CLAUSES,
     applies: applies, compute: compute, makePlan: makePlan, normalize: normalize,
     parseAssessmentFile: parseAssessmentFile, parseSimpleYaml: parseSimpleYaml,
     exportAssessment: exportAssessment, toMarkdown: toMarkdown, bandFor: bandFor, move: move, fmt: fmt

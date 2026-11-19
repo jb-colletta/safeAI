@@ -55,7 +55,8 @@ def make_template(framework: Dict[str, Any], mode: str = "both", name: str = "")
             out.append(f"  # {layer['tagline']}")
             out.append(f"  # {'=' * 70}")
         out.append("")
-        out.append(f"  # {control['title']}  [{control['severity']}; strongest possible: {control['max_guarantee']}]")
+        floor_tag = "; HUMAN-DIGNITY FLOOR: needs procedural or structural" if control.get("floor") else ""
+        out.append(f"  # {control['title']}  [{control['severity']}; strongest possible: {control['max_guarantee']}{floor_tag}]")
         for line in textwrap.wrap(control["question"], width=84):
             out.append(f"  #   {line}")
         out.append(f"  {control['id']}:")

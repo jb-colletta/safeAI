@@ -29,6 +29,8 @@ The most useful thing safeAI can teach is that safety controls differ in *kind*,
 | "Your data is never used for training" without naming the account type it depends on | Terms differ between consumer and business accounts |
 | "The AI decides who needs help" or any eligibility language | See L4.07 |
 | "AI companion", "counselor", or "care assistant" for members, clients, or constituents | See L6.03 |
+| That your AI is "dignity-compliant", "ethical", or that it "upholds human dignity" | The floor shows safeguards you report having, not how the AI behaves. Say instead: "we assessed ourselves against a human-dignity floor and here is where we stand" |
+| That you "meet the floor" while any floor control is unanswered or guided | The report calls that not met or not confirmed |
 | That you are "aligned with", "approved by", or "compliant with" a standard or law, unless a qualified party has confirmed it | A framework or checklist is not a certification |
 
 ## A one-breath answer to "Is it safe?"

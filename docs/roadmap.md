@@ -4,7 +4,7 @@ This is a list of intentions, not promises. Nothing here exists yet. Following o
 
 ## Version 0.1 (current)
 
-- The seven levels and about 68 controls, each with a question, steps, and evidence
+- The seven levels and about 70 controls, including an 11-control human-dignity floor that holds the overall rating at Developing until it is met, each with a question, steps, and evidence
 - Three kinds of guarantee (structural, procedural, guided) and honest-claim statements
 - Command-line tool: `init`, `check`, `report`, `plan`, `diff`
 - Browser tool that stores nothing outside your browser

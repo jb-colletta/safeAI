@@ -24,6 +24,11 @@
 #   quick_win      true if a typical organization can close the gap in weeks
 #   steps          concrete actions that close the gap
 #   evidence       what an auditor could look at to confirm the answer
+#   floor          (optional) true if the control is part of the human-dignity floor.
+#                  A floor control must reach at least procedural, or the overall rating
+#                  is held at Developing. See docs/floor.md.
+#   floor_principle  one plain sentence naming what the floor control protects
+#                  (required when floor is true)
 
 version: "0.1.0"
 
@@ -404,6 +409,8 @@ controls:
 
   - id: L3.04
     layer: L3
+    floor: true
+    floor_principle: "Serious or irreversible decisions stay with people."
     title: Irreversible actions are never autonomous
     question: Do deletions, bulk messages, payments, and changes to protected records always need a human commit, whatever the grant?
     audience: [organization, product]
@@ -521,6 +528,8 @@ controls:
 
   - id: L4.03
     layer: L4
+    floor: true
+    floor_principle: "Children's images and identifying details are kept off AI paths."
     title: Images and identifying details of minors stay off AI paths
     question: Are photos and identifying details of children unreachable by AI, and is AI generation or editing of images of identifiable children prohibited?
     audience: [organization, product]
@@ -536,6 +545,8 @@ controls:
 
   - id: L4.04
     layer: L4
+    floor: true
+    floor_principle: "The AI does not contact children without the required adults."
     title: No AI-initiated contact with minors without required adults
     question: Is it impossible for the AI to send a message to a minor without a parent, guardian, or other required adult included, where your policy requires it?
     audience: [organization, product]
@@ -579,6 +590,8 @@ controls:
 
   - id: L4.07
     layer: L4
+    floor: true
+    floor_principle: "People, not algorithms, decide who receives help."
     title: AI informs; people decide eligibility and priority
     question: When AI contributes to decisions about aid, services, or care priority, is a named person always the decider, and is their decision recorded?
     audience: [organization, product]
@@ -609,6 +622,8 @@ controls:
 
   - id: L4.09
     layer: L4
+    floor: true
+    floor_principle: "How the AI measures and ranks people is visible, not hidden."
     title: AI scores and classifications of people are visible
     question: Is any AI-produced score, label, or classification of a person disclosed to staff and explainable to them?
     audience: [organization, product]
@@ -638,6 +653,8 @@ controls:
 
   - id: L4.11
     layer: L4
+    floor: true
+    floor_principle: "Protecting the vulnerable is the provider's burden and cannot be weakened."
     title: Protections are on by default and can only be raised
     question: Do protections for vulnerable people ship enabled, and can an administrator only strengthen them, never weaken them?
     audience: [product]
@@ -650,6 +667,23 @@ controls:
       - Make them non-waivable at the customer or chapter level. Allow tightening only.
       - Do not shift the burden of control onto the families or administrators who might not find the setting.
     evidence: [Default configuration, Admin settings showing no weaken option]
+
+  - id: L4.12
+    layer: L4
+    floor: true
+    floor_principle: "A person's worth is never scored by what they produce."
+    title: A person's worth is never scored by usefulness
+    question: Do you make sure that no AI score, ranking, or recommendation treats a person's worth or deservingness as depending on what they produce, achieve, or contribute (for example productivity, capacity, age, or ability)?
+    audience: [organization, product]
+    max_guarantee: procedural
+    severity: critical
+    effort: medium
+    quick_win: false
+    steps:
+      - List every AI score, ranking, or prioritization that applies to people.
+      - "Review each measure. Prioritizing by need is fine; treating output, ability, age, or usefulness as a person's worth is not. Remove or change any measure that does."
+      - Require a named person to sign off on each measure, and re-review when the model or its inputs change.
+    evidence: [List of AI scoring uses with review notes, Sign-off record]
 
   # ------------------------------------------------------------------ L5 Mission
   - id: L5.01
@@ -784,6 +818,22 @@ controls:
       - Review proposals on a schedule and record the outcome.
     evidence: [Proposal channel, Record of decisions]
 
+  - id: L5.10
+    layer: L5
+    title: The governing values source is pinned and versioned
+    question: Is the document that governs your AI's values and commitments kept at a fixed, dated version, and does changing it require a recorded decision by a named person?
+    audience: [organization, product]
+    max_guarantee: procedural
+    severity: high
+    effort: low
+    quick_win: true
+    steps:
+      - Name the document or documents that govern what the AI is told about your values and commitments.
+      - Give each a version number and date, and store it somewhere that tracks changes.
+      - Require a named approver for any change, and record the date, the reason, and the approver.
+      - Test the AI's behavior against a new version before it goes live (see L5.07).
+    evidence: [Versioned values document, Change records with approver]
+
   # ------------------------------------------------------------------ L6 Human boundary
   - id: L6.01
     layer: L6
@@ -801,6 +851,8 @@ controls:
 
   - id: L6.02
     layer: L6
+    floor: true
+    floor_principle: "The AI never passes as a person."
     title: AI is disclosed where it matters
     question: Do public-facing chatbots identify themselves as AI, and is AI-drafted content labeled wherever your policy or the law requires?
     audience: [organization, product]
@@ -816,6 +868,8 @@ controls:
 
   - id: L6.03
     layer: L6
+    floor: true
+    floor_principle: "Simulated care is never presented as a real relationship."
     title: No simulated care, friendship, or companionship
     question: Do you avoid member-facing AI that simulates care or companionship, and are care messages sent and followed up by a named person?
     audience: [organization, product]
@@ -947,6 +1001,8 @@ controls:
 
   - id: L7.04
     layer: L7
+    floor: true
+    floor_principle: "Someone identifiable answers for the AI at every stage."
     title: Responsibility map
     question: For each deployment, is it written down what the vendor, the software provider, and your organization each answer for?
     audience: [organization, product]
@@ -1020,6 +1076,8 @@ controls:
 
   - id: L7.09
     layer: L7
+    floor: true
+    floor_principle: "Anyone affected can appeal to a human."
     title: Recourse for affected people
     question: Can a person affected by an AI-informed decision ask for review by a human, and can staff reconstruct how the decision was reached?
     audience: [organization, product]

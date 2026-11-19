@@ -60,6 +60,13 @@ def to_markdown(result: Dict[str, Any], plan: Dict[str, Any], framework: Dict[st
         lines.append("No controls have been answered yet, so there is no score.")
     else:
         lines.append(f"**Overall: {_fmt(o['score'])} / 100 ({o['band']})**")
+        if o["gated"]:
+            state = "not met" if result["floor"]["status"] == "not_met" else "not yet confirmed"
+            lines.append("")
+            lines.append(
+                f"**Held at {o['band']}:** the human-dignity floor is {state}. "
+                f"Without that, the rating would be {o['ungated_band']}."
+            )
     lines.append("")
     if o["score"] is not None and not result["strict"] and cov["percent"] is not None and cov["percent"] < 50:
         lines.append("**Provisional:** fewer than half of the applicable controls have been answered.")
@@ -91,6 +98,8 @@ def to_markdown(result: Dict[str, Any], plan: Dict[str, Any], framework: Dict[st
         "Describe `procedural` as *requiring approval* and `guided` as *recommended*."
     )
     lines.append("")
+
+    lines.extend(_floor_markdown(result["floor"]))
 
     lines.append("## The seven levels")
     lines.append("")
@@ -130,6 +139,43 @@ def to_markdown(result: Dict[str, Any], plan: Dict[str, Any], framework: Dict[st
     return "\n".join(lines)
 
 
+FLOOR_STATE = {"met": "Met", "not_met": "Not met", "unconfirmed": "Not assessed", "na": "N/A"}
+FLOOR_TEXT = {
+    "met": (
+        "Every floor control is reported at procedural or stronger. This is a self-reported result, "
+        "not a certification, and it does not show that the AI itself behaves well."
+    ),
+    "not_met": (
+        "The floor is **not met**. At least one floor control is answered below procedural. "
+        "Close these before anything else."
+    ),
+    "unconfirmed": (
+        "The floor is **not yet confirmed**. Some floor controls are unanswered. "
+        "Answer them before relying on any rating."
+    ),
+}
+
+
+def _floor_markdown(floor: Dict[str, Any]) -> List[str]:
+    if floor["status"] == "none":
+        return []
+    lines = ["## The human-dignity floor", "", FLOOR_TEXT[floor["status"]], ""]
+    lines.append("| ID | What it protects | Control | Your answer | Floor |")
+    lines.append("|---|---|---|---|---|")
+    for i in floor["controls"]:
+        lines.append(
+            f"| {i['id']} | {i['principle']} | {i['title']} | {ANSWER_LABEL[i['answer']]} | {FLOOR_STATE[i['state']]} |"
+        )
+    lines.append("")
+    if floor["not_applicable"]:
+        lines.append(
+            "Marked not applicable (confirm that each really does not apply to you): "
+            + ", ".join(floor["not_applicable"]) + "."
+        )
+        lines.append("")
+    return lines
+
+
 def _plan_markdown(plan: Dict[str, Any], by_id: Dict[str, Any], heading_level: int = 2) -> List[str]:
     h = "#" * heading_level
     lines: List[str] = []
@@ -139,6 +185,12 @@ def _plan_markdown(plan: Dict[str, Any], by_id: Dict[str, Any], heading_level: i
         lines.append("No gaps found among the controls you answered. Keep your evidence current.")
         lines.append("")
         return lines
+    if plan.get("floor"):
+        lines.append(f"{h}# Human-dignity floor first")
+        lines.append("")
+        for i in plan["floor"]:
+            lines.append(f"- **{i['id']} {i['title']}**: {_move(i)}")
+        lines.append("")
     open_critical = [i for i in plan["critical"] if i["current"] in ("none", "unanswered", "guided")]
     if open_critical:
         lines.append(f"{h}# Critical gaps first")
@@ -184,6 +236,10 @@ def plan_to_markdown(result: Dict[str, Any], plan: Dict[str, Any], framework: Di
 def diff_to_markdown(diff: Dict[str, Any]) -> str:
     o = diff["overall"]
     lines = ["# safeAI progress", ""]
+    fl = diff.get("floor", {})
+    if fl.get("before") != fl.get("after"):
+        lines.append(f"Human-dignity floor: {fl.get('before')} → {fl.get('after')}")
+        lines.append("")
     lines.append(f"Overall: {_fmt(o['before'])} → {_fmt(o['after'])}" + (f" ({o['delta']:+.1f})" if o["delta"] is not None else ""))
     lines.append("")
     lines.append("| Level | Before | After | Change |")

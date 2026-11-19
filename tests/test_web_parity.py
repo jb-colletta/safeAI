@@ -50,6 +50,8 @@ def test_scores_and_plan_match_python(tmp_path, strict):
     assert js["result"]["coverage"] == py_result["coverage"]
     assert js["result"]["layers"] == py_result["layers"]
     assert js["result"]["verbs"] == py_result["verbs"]
+    assert js["result"]["floor"] == py_result["floor"]
+    assert [i["id"] for i in js["plan"]["floor"]] == [i["id"] for i in py_plan["floor"]]
     assert js["result"]["unevidenced"] == py_result["unevidenced"]
     assert [i["id"] for i in js["plan"]["critical"]] == [i["id"] for i in py_plan["critical"]]
     for key in ("quick", "next", "later"):
@@ -71,3 +73,23 @@ def test_built_page_is_current():
 
     assert (ROOT / "web" / "index.html").read_text(encoding="utf-8") == build_web.build(), \
         "web/index.html is stale: run `python scripts/build_web.py`"
+
+
+@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize("gap", ["L4.07", "L7.09"])
+def test_gated_high_score_matches_python(tmp_path, strict, gap):
+    """A strong organization with one floor gap, and one with an unanswered floor control."""
+    fw = load_framework()
+    answers = {c["id"]: {"answer": c["max_guarantee"], "note": "n", "evidence": "e"} for c in fw["controls"]}
+    if gap == "L4.07":
+        answers[gap]["answer"] = "none"
+    else:
+        del answers[gap]
+    path = tmp_path / "strong.json"
+    path.write_text(json.dumps({"scope": {"mode": "both", "name": "x"}, "answers": answers}))
+    py_result = compute(fw, load_assessment(path), strict=strict)
+    py_plan = make_plan(py_result)
+    js = run_js(tmp_path, path, strict)
+    assert js["result"]["overall"] == py_result["overall"]
+    assert js["result"]["floor"] == py_result["floor"]
+    assert [i["id"] for i in js["plan"]["floor"]] == [i["id"] for i in py_plan["floor"]]

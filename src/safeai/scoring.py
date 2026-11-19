@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 from .framework import (
     ANSWERS,
     EFFORT_COST,
+    FLOOR_MIN_LEVEL,
     GUARANTEE_RANK,
     MODES,
     RANK_NAME,
@@ -57,13 +58,21 @@ def r4(x: float) -> float:
     return math.floor(x * 10000 + 0.5) / 10000
 
 
+# While the human-dignity floor is not met or not confirmed, the rating is held here.
+GATED_BAND = "Developing"
+
+
 def band_for(score: Optional[float]) -> Optional[str]:
     if score is None:
         return None
-    for floor, name in BANDS:
-        if score >= floor:
+    for threshold, name in BANDS:
+        if score >= threshold:
             return name
     return BANDS[-1][1]
+
+
+def _band_rank(name: str) -> int:
+    return [b[1] for b in reversed(BANDS)].index(name)
 
 
 # ---------------------------------------------------------------- assessment files
@@ -150,6 +159,7 @@ def compute(
             "severity": control["severity"],
             "effort": control["effort"],
             "quick_win": bool(control["quick_win"]),
+            "floor": bool(control.get("floor")),
             "max_guarantee": control["max_guarantee"],
             "target": target,
             "answer": ans,
@@ -195,7 +205,14 @@ def compute(
     overall = {
         "score": pct(overall_score) if overall_score is not None else None,
     }
-    overall["band"] = band_for(overall["score"])
+    overall["ungated_band"] = band_for(overall["score"])
+    floor = _floor_summary(framework, rows)
+    overall["gated"] = bool(
+        overall["ungated_band"] is not None
+        and floor["status"] in ("not_met", "unconfirmed")
+        and _band_rank(overall["ungated_band"]) > _band_rank(GATED_BAND)
+    )
+    overall["band"] = GATED_BAND if overall["gated"] else overall["ungated_band"]
 
     applicable = [r for r in rows if r["status"] != "na"]
     coverage = {
@@ -214,11 +231,57 @@ def compute(
         "strict": strict,
         "coverage": coverage,
         "overall": overall,
+        "floor": floor,
         "layers": layers_out,
         "verbs": verbs_out,
         "controls": rows,
         "unevidenced": [r["id"] for r in rows if r["unevidenced"]],
         "capped": [r["id"] for r in rows if r["capped"]],
+    }
+
+
+def _floor_summary(framework: Dict[str, Any], rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Summarize the human-dignity floor.
+
+    A floor control is met at ``procedural`` or stronger. ``not_met`` means at least one is
+    answered below that. ``unconfirmed`` means none is below it but some are unanswered.
+    A floor control marked not applicable is listed so the claim can be checked.
+    """
+    principles = {c["id"]: c.get("floor_principle", "") for c in framework["controls"]}
+    frows = [r for r in rows if r["floor"]]
+    items = []
+    for r in frows:
+        if r["status"] == "na":
+            state = "na"
+        elif r["status"] == "scored":
+            state = "met" if r["level"] >= FLOOR_MIN_LEVEL else "not_met"
+        else:
+            state = "unconfirmed"
+        items.append(
+            {
+                "id": r["id"],
+                "title": r["title"],
+                "principle": principles.get(r["id"], ""),
+                "answer": r["answer"],
+                "state": state,
+            }
+        )
+    not_met = [i["id"] for i in items if i["state"] == "not_met"]
+    unconfirmed = [i["id"] for i in items if i["state"] == "unconfirmed"]
+    if not items:
+        status = "none"
+    elif not_met:
+        status = "not_met"
+    elif unconfirmed:
+        status = "unconfirmed"
+    else:
+        status = "met"
+    return {
+        "status": status,
+        "controls": items,
+        "not_met": not_met,
+        "unconfirmed": unconfirmed,
+        "not_applicable": [i["id"] for i in items if i["state"] == "na"],
     }
 
 
@@ -323,7 +386,9 @@ def make_plan(result: Dict[str, Any]) -> Dict[str, Any]:
     }
     critical = [i for i in items if i["severity"] == "critical"]
     critical.sort(key=lambda i: (-(1 if i["current"] in ("none", "unanswered") else 0), i["id"]))
-    return {"critical": critical, "horizons": horizons, "count": len(items)}
+    floor_ids = {i["id"] for i in result["floor"]["controls"] if i["state"] in ("not_met", "unconfirmed")}
+    floor_first = sorted((i for i in items if i["id"] in floor_ids), key=lambda i: i["id"])
+    return {"floor": floor_first, "critical": critical, "horizons": horizons, "count": len(items)}
 
 
 # ---------------------------------------------------------------- progress
@@ -358,6 +423,7 @@ def compare(old: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
         layer_deltas.append({"id": layer["id"], "name": layer["name"], "before": before, "after": after, "delta": delta})
     b, a = old["overall"]["score"], new["overall"]["score"]
     return {
+        "floor": {"before": old.get("floor", {}).get("status"), "after": new.get("floor", {}).get("status")},
         "overall": {"before": b, "after": a, "delta": None if b is None or a is None else round(a - b, 1)},
         "layers": layer_deltas,
         "improved": improved,

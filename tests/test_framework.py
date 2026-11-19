@@ -53,3 +53,25 @@ def test_no_forbidden_references_in_repository():
             if re.search(r"\b" + re.escape(word) + r"\b", text):
                 hits.append((str(path.relative_to(ROOT)), word))
     assert not hits, hits
+
+
+def test_floor_validation_catches_problems():
+    fw = load_framework()
+    controls = [dict(c) for c in fw["controls"]]
+    floor_ctrl = next(c for c in controls if c.get("floor"))
+    floor_ctrl.pop("floor_principle")
+    assert any("floor_principle" in e for e in validate_framework({**fw, "controls": controls}))
+    controls = [dict(c) for c in fw["controls"]]
+    guided = next(c for c in controls if c["max_guarantee"] == "guided")
+    guided["floor"] = True
+    guided["floor_principle"] = "x"
+    assert any("procedural" in e for e in validate_framework({**fw, "controls": controls}))
+
+
+def test_floor_principles_stay_generic():
+    """Floor wording must stand on its own, with no source or tradition named."""
+    fw = load_framework()
+    for c in fw["controls"]:
+        if c.get("floor"):
+            text = (c["floor_principle"] + " " + c["title"]).lower()
+            assert not re.search(r"encyclical|pope|scripture|doctrine|dogma", text), c["id"]

@@ -6,7 +6,7 @@
 
 safeAI is a free, open-source toolkit that helps any non-profit, or any software product serving non-profits, to:
 
-1. **Assess** where you stand on each of the seven levels (about 68 concrete controls).
+1. **Assess** where you stand on each of the seven levels (about 70 concrete controls).
 2. **See the gaps honestly**, including the difference between a protection that is *enforced* and one that is only *hoped for*.
 3. **Close them**, with a prioritized action plan and concrete steps for every control.
 4. **Show progress** over time.
@@ -57,6 +57,12 @@ Most safety checklists say "yes/no". safeAI asks *how* each protection is guaran
 
 **The rule: never present a guided control as structural.** Guided controls are valuable, and much of what keeps an AI faithful to a mission will always be guided. But say so. The report turns your answers into statements you can honestly make (and flags claims that have no evidence behind them). See [docs/honest-claims.md](docs/honest-claims.md).
 
+## A floor under everything: human dignity
+
+Eleven of the controls form a **human-dignity floor**. They say that people, not algorithms, decide who receives help; that a person's worth is never scored by what they produce; that the AI never passes as a person or simulates care as a real relationship; that children and the vulnerable are protected by the provider, not left to families; and that someone identifiable answers for the AI and anyone affected can appeal to a human.
+
+If the floor is not met, your overall rating is held at *Developing* however well the rest scores. Beyond the floor, your organization writes its own mission and values along the seven levels (Level 5). The floor can be raised but never lowered. See [docs/floor.md](docs/floor.md), including what it does *not* claim.
+
 ## Repository map
 
 | Path | What it is |
@@ -65,7 +71,7 @@ Most safety checklists say "yes/no". safeAI asks *how* each protection is guaran
 | `src/safeai/` | Python package and `safeai` command |
 | `web/` | Browser tool (`index.html` is built from `index.template.html` + `scoring.js` + the framework) |
 | `examples/` | A fictional assessment and its generated report |
-| `docs/` | [Framework](docs/framework.md) · [Using the tool](docs/using-the-tool.md) · [Scoring](docs/scoring.md) · [Honest claims](docs/honest-claims.md) · [References](docs/references.md) · [Roadmap](docs/roadmap.md) |
+| `docs/` | [Framework](docs/framework.md) · [Human-dignity floor](docs/floor.md) · [Using the tool](docs/using-the-tool.md) · [Scoring](docs/scoring.md) · [Honest claims](docs/honest-claims.md) · [References](docs/references.md) · [Roadmap](docs/roadmap.md) |
 | `tests/` | Unit tests, including a check that the browser and Python scorers agree |
 
 ## What this is not

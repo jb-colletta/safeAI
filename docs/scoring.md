@@ -52,6 +52,16 @@ Controls marked `na` are left out. **Unanswered controls are also left out**, an
 
 Bands are labels for conversation, not standards.
 
+## The human-dignity floor
+
+Eleven controls are marked as the floor (see [floor.md](floor.md)). A floor control is **met** at `procedural` or `structural`. The floor's status is:
+
+- `met`: every applicable floor control is met (or marked not applicable).
+- `not_met`: at least one is answered below procedural.
+- `unconfirmed`: none is below procedural, but at least one is unanswered.
+
+When the status is `not_met` or `unconfirmed`, the overall band is **held at Developing** if the score would otherwise be higher. The numeric score is unchanged. The result carries both `band` (after the hold) and `ungated_band`, and `gated` says whether a hold was applied.
+
 ## "What you can honestly say"
 
 For each verb, the report compares your answers with one plain statement (for example, for DO: *"It does only what you grant, and it stops for a named person where it matters."*):

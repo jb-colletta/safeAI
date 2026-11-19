@@ -12,6 +12,8 @@ RANK_NAME = {v: k for k, v in GUARANTEE_RANK.items()}
 ANSWERS = ("none", "guided", "procedural", "structural", "na")
 SEVERITY_WEIGHT = {"critical": 3, "high": 2, "medium": 1}
 EFFORT_COST = {"low": 1, "medium": 2, "high": 3}
+# A floor control is met at this level or above (2 = procedural).
+FLOOR_MIN_LEVEL = 2
 MODES = ("organization", "product", "both")
 AUDIENCES = ("organization", "product")
 
@@ -85,6 +87,13 @@ def validate_framework(data: Dict[str, Any]) -> List[str]:
             errors.append(f"{cid}: quick_win requires effort: low")
         if not control.get("steps"):
             errors.append(f"{cid}: needs at least one step")
+        if "floor" in control and not isinstance(control["floor"], bool):
+            errors.append(f"{cid}: floor must be true or false")
+        if control.get("floor"):
+            if control.get("max_guarantee") not in ("procedural", "structural"):
+                errors.append(f"{cid}: a floor control must allow at least a procedural guarantee")
+            if not str(control.get("floor_principle") or "").strip():
+                errors.append(f"{cid}: a floor control needs a floor_principle")
     for layer_id in layer_ids:
         if not any(c.get("layer") == layer_id for c in data["controls"]):
             errors.append(f"layer {layer_id} has no controls")

@@ -120,3 +120,98 @@ def test_example_assessment_is_valid():
     a = load_assessment(ROOT / "examples" / "assessment.example.yaml")
     assert validate_assessment(FW, a) == []
     assert compute(FW, a)["overall"]["score"] is not None
+
+
+# ---------------------------------------------------------------- human-dignity floor
+
+FLOOR_IDS = [c["id"] for c in FW["controls"] if c.get("floor")]
+
+
+def all_at_max(**overrides):
+    answers = {c["id"]: c["max_guarantee"] for c in FW["controls"]}
+    answers.update(overrides)
+    return assess(**answers)
+
+
+def test_floor_has_expected_shape():
+    assert len(FLOOR_IDS) == 11
+    for c in FW["controls"]:
+        if c.get("floor"):
+            assert c["max_guarantee"] in ("procedural", "structural"), c["id"]
+            assert c["floor_principle"].strip(), c["id"]
+
+
+def test_floor_met_when_everything_in_place():
+    r = compute(FW, all_at_max())
+    assert r["floor"]["status"] == "met"
+    assert r["overall"]["gated"] is False
+    assert r["overall"]["band"] == "Leading"
+
+
+def test_floor_gap_holds_a_high_score_at_developing():
+    r = compute(FW, all_at_max(**{"L4.07": "none"}))
+    assert r["overall"]["score"] > 90          # the rest is excellent...
+    assert r["overall"]["ungated_band"] == "Leading"
+    assert r["overall"]["band"] == "Developing"  # ...but the floor holds the rating down
+    assert r["overall"]["gated"] is True
+    assert r["floor"]["status"] == "not_met"
+    assert r["floor"]["not_met"] == ["L4.07"]
+
+
+def test_guided_does_not_meet_the_floor_but_procedural_does():
+    assert compute(FW, all_at_max(**{"L7.09": "guided"}))["floor"]["status"] == "not_met"
+    assert compute(FW, all_at_max(**{"L7.09": "procedural"}))["floor"]["status"] == "met"
+
+
+def test_unanswered_floor_control_is_unconfirmed_and_still_gates():
+    answers = {c["id"]: c["max_guarantee"] for c in FW["controls"] if c["id"] != "L7.09"}
+    r = compute(FW, assess(**answers))
+    assert r["floor"]["status"] == "unconfirmed"
+    assert r["floor"]["unconfirmed"] == ["L7.09"]
+    assert r["overall"]["gated"] is True
+
+
+def test_strict_mode_turns_unanswered_floor_control_into_not_met():
+    answers = {c["id"]: c["max_guarantee"] for c in FW["controls"] if c["id"] != "L7.09"}
+    r = compute(FW, assess(**answers), strict=True)
+    assert r["floor"]["status"] == "not_met"
+
+
+def test_not_applicable_floor_control_is_allowed_but_listed():
+    r = compute(FW, all_at_max(**{"L4.04": "na"}))
+    assert r["floor"]["status"] == "met"
+    assert r["floor"]["not_applicable"] == ["L4.04"]
+
+
+def test_floor_respects_mode():
+    r = compute(FW, normalize_assessment(
+        {"scope": {"mode": "organization"}, "answers": {c["id"]: c["max_guarantee"] for c in FW["controls"]}}))
+    ids = [i["id"] for i in r["floor"]["controls"]]
+    assert "L4.11" not in ids  # product-only control
+
+
+def test_no_gate_when_nothing_answered():
+    r = compute(FW, assess())
+    assert r["overall"]["band"] is None
+    assert r["overall"]["gated"] is False
+
+
+def test_plan_lists_floor_gaps_first():
+    r = compute(FW, all_at_max(**{"L4.07": "none", "L6.03": "guided"}))
+    plan = make_plan(r)
+    assert [i["id"] for i in plan["floor"]] == ["L4.07", "L6.03"]
+
+
+def test_report_states_the_gate_plainly():
+    from safeai.report import to_markdown
+    r = compute(FW, all_at_max(**{"L4.07": "none"}))
+    md = to_markdown(r, make_plan(r), FW)
+    assert "Held at Developing" in md
+    assert "## The human-dignity floor" in md
+    assert "not a certification" in to_markdown(compute(FW, all_at_max()), make_plan(compute(FW, all_at_max())), FW)
+
+
+def test_compare_reports_floor_change():
+    before = compute(FW, all_at_max(**{"L4.07": "none"}))
+    after = compute(FW, all_at_max())
+    assert compare(before, after)["floor"] == {"before": "not_met", "after": "met"}

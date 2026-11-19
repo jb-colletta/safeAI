@@ -8,7 +8,7 @@ Assessor: Example assessor · Date: 2026-01-15 · Mode: both · Framework versio
 
 **Overall: 60.2 / 100 (Developing)**
 
-Coverage: 46 of 67 applicable controls answered (68.7%); 1 marked not applicable.
+Coverage: 46 of 69 applicable controls answered (66.7%); 1 marked not applicable.
 Unanswered controls are left out of the scores. The real position may be worse than shown. Use `--strict` to count them as `none`.
 
 ## What you can honestly say
@@ -24,6 +24,24 @@ Unanswered controls are left out of the scores. The real position may be worse t
 
 Only describe a control as *enforced* if you answered `structural` and can show the evidence. Describe `procedural` as *requiring approval* and `guided` as *recommended*.
 
+## The human-dignity floor
+
+The floor is **not met**. At least one floor control is answered below procedural. Close these before anything else.
+
+| ID | What it protects | Control | Your answer | Floor |
+|---|---|---|---|---|
+| L3.04 | Serious or irreversible decisions stay with people. | Irreversible actions are never autonomous | None | Not met |
+| L4.03 | Children's images and identifying details are kept off AI paths. | Images and identifying details of minors stay off AI paths | None | Not met |
+| L4.04 | The AI does not contact children without the required adults. | No AI-initiated contact with minors without required adults | None | Not met |
+| L4.07 | People, not algorithms, decide who receives help. | AI informs; people decide eligibility and priority | Procedural | Met |
+| L4.09 | How the AI measures and ranks people is visible, not hidden. | AI scores and classifications of people are visible | Not assessed | Not assessed |
+| L4.11 | Protecting the vulnerable is the provider's burden and cannot be weakened. | Protections are on by default and can only be raised | Not assessed | Not assessed |
+| L4.12 | A person's worth is never scored by what they produce. | A person's worth is never scored by usefulness | Not assessed | Not assessed |
+| L6.02 | The AI never passes as a person. | AI is disclosed where it matters | Structural | Met |
+| L6.03 | Simulated care is never presented as a real relationship. | No simulated care, friendship, or companionship | Not assessed | Not assessed |
+| L7.04 | Someone identifiable answers for the AI at every stage. | Responsibility map | Not assessed | Not assessed |
+| L7.09 | Anyone affected can appeal to a human. | Recourse for affected people | Not assessed | Not assessed |
+
 ## The seven levels
 
 | Level | Score | Structural | Procedural | Guided | None | Not assessed |
@@ -31,12 +49,24 @@ Only describe a control as *enforced* if you answered `structural` and can show 
 | L1 Data protection (SEE) | 64.9 | 2 | 2 | 2 | 2 | 0 |
 | L2 Vendor and model trust (SEE) | 63.3 | 0 | 3 | 0 | 2 | 3 |
 | L3 Delegation and authority (DO) | 44.4 | 1 | 3 | 0 | 3 | 1 |
-| L4 Protection of the vulnerable (DO) | 50.0 | 0 | 3 | 2 | 3 | 3 |
-| L5 Mission and values fidelity (SAY) | 66.7 | 0 | 2 | 2 | 1 | 4 |
+| L4 Protection of the vulnerable (DO) | 50.0 | 0 | 3 | 2 | 3 | 4 |
+| L5 Mission and values fidelity (SAY) | 66.7 | 0 | 2 | 2 | 1 | 5 |
 | L6 The human boundary (SAY) | 90.0 | 2 | 2 | 0 | 0 | 4 |
 | L7 Accountability and governance (ANSWER) | 61.9 | 2 | 2 | 1 | 4 | 6 |
 
 ## Action plan
+
+### Human-dignity floor first
+
+- **L3.04 Irreversible actions are never autonomous**: currently none, next step guided (target: structural)
+- **L4.03 Images and identifying details of minors stay off AI paths**: currently none, next step guided (target: structural)
+- **L4.04 No AI-initiated contact with minors without required adults**: currently none, next step guided (target: structural)
+- **L4.09 AI scores and classifications of people are visible**: not yet assessed. Answer it first (target: procedural)
+- **L4.11 Protections are on by default and can only be raised**: not yet assessed. Answer it first (target: structural)
+- **L4.12 A person's worth is never scored by usefulness**: not yet assessed. Answer it first (target: procedural)
+- **L6.03 No simulated care, friendship, or companionship**: not yet assessed. Answer it first (target: procedural)
+- **L7.04 Responsibility map**: not yet assessed. Answer it first (target: procedural)
+- **L7.09 Recourse for affected people**: not yet assessed. Answer it first (target: procedural)
 
 ### Critical gaps first
 
@@ -45,6 +75,7 @@ Only describe a control as *enforced* if you answered `structural` and can show 
 - **L3.07 Prompt-injection containment**: currently none, next step guided (target: structural)
 - **L4.03 Images and identifying details of minors stay off AI paths**: currently none, next step guided (target: structural)
 - **L4.04 No AI-initiated contact with minors without required adults**: currently none, next step guided (target: structural)
+- **L4.12 A person's worth is never scored by usefulness**: not yet assessed. Answer it first (target: procedural)
 - **L1.04 Personal data is masked before it reaches the model**: currently guided, next step procedural (target: structural)
 - **L4.02 Protected records blocked or masked by default**: currently guided, next step procedural (target: structural)
 
@@ -66,6 +97,12 @@ Only describe a control as *enforced* if you answered `structural` and can show 
 **L5.04 Your values are authored by you** · high · not yet assessed. Answer it first (target: procedural)
 - [ ] Have your board or leadership adopt the values through your normal process.
 - [ ] If you build software, set floors only for safeguarding and data protection. Never ship values or doctrine as a default.
+
+**L5.10 The governing values source is pinned and versioned** · high · not yet assessed. Answer it first (target: procedural)
+- [ ] Name the document or documents that govern what the AI is told about your values and commitments.
+- [ ] Give each a version number and date, and store it somewhere that tracks changes.
+- [ ] Require a named approver for any change, and record the date, the reason, and the approver.
+- [ ] Test the AI's behavior against a new version before it goes live (see L5.07).
 
 **L6.03 No simulated care, friendship, or companionship** · high · not yet assessed. Answer it first (target: procedural)
 - [ ] State the rule: the AI drafts, and a person cares.
@@ -148,6 +185,11 @@ Only describe a control as *enforced* if you answered `structural` and can show 
 **L4.04 No AI-initiated contact with minors without required adults** · critical · currently none, next step guided (target: structural)
 - [ ] Add a recipient rule on every send path that checks for minors and required copies.
 - [ ] Hold, and do not send, any message that fails the rule.
+
+**L4.12 A person's worth is never scored by usefulness** · critical · not yet assessed. Answer it first (target: procedural)
+- [ ] List every AI score, ranking, or prioritization that applies to people.
+- [ ] Review each measure. Prioritizing by need is fine; treating output, ability, age, or usefulness as a person's worth is not. Remove or change any measure that does.
+- [ ] Require a named person to sign off on each measure, and re-review when the model or its inputs change.
 
 **L1.04 Personal data is masked before it reaches the model** · critical · currently guided, next step procedural (target: structural)
 - [ ] Put a masking layer between your data and the AI so masking cannot be bypassed with a clever prompt.
@@ -297,6 +339,7 @@ Only describe a control as *enforced* if you answered `structural` and can show 
 | L4.09 | AI scores and classifications of people are visible | high | Not assessed | procedural |
 | L4.10 | No appeals that exploit vulnerability | high | Guided | procedural |
 | L4.11 | Protections are on by default and can only be raised | high | Not assessed | structural |
+| L4.12 | A person's worth is never scored by usefulness | critical | Not assessed | procedural |
 | L5.01 | Mission and commitments are written down for AI | high | Procedural | procedural |
 | L5.02 | Values file is given to the AI as context | medium | Guided | guided |
 | L5.03 | Enforced commitments are separated from guidance | high | Not assessed | procedural |
@@ -306,6 +349,7 @@ Only describe a control as *enforced* if you answered `structural` and can show 
 | L5.07 | Behavioral regression tests | high | None | procedural |
 | L5.08 | Public-facing AI content is reviewed before release | high | Procedural | procedural |
 | L5.09 | Corrections can come from below | medium | Not assessed | procedural |
+| L5.10 | The governing values source is pinned and versioned | high | Not assessed | procedural |
 | L6.01 | No signing as a person without their approval | critical | Procedural | structural |
 | L6.02 | AI is disclosed where it matters | high | Structural | structural |
 | L6.03 | No simulated care, friendship, or companionship | high | Not assessed | procedural |
