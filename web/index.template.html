@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>safeAI: Is it safe?</title>
+<meta name="description" content="A free self-assessment for non-profits: find the gaps in your AI safety across seven levels, then close them. Runs entirely in your browser.">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--fg:#17202a;--muted:#566170;--line:#d6dbe2;--accent:#1d5fa8;--accent-ink:#fff;
+  --structural:#0f766e;--procedural:#1d4ed8;--guided:#a85a00;--none:#b42318;--na:#566170;
+  --warn-bg:#fff6e0;--warn-line:#e6b34d;--shadow:0 1px 2px rgba(20,30,50,.08);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1318;--surface:#171c23;--fg:#e8ecf1;--muted:#9aa6b4;--line:#2b333d;--accent:#6aa7f0;--accent-ink:#0b1220;
+  --structural:#4fd1c0;--procedural:#7aa8ff;--guided:#f0b04f;--none:#ff8a80;--na:#9aa6b4;
+  --warn-bg:#2a2412;--warn-line:#7a6320;--shadow:none;}}
+:root[data-theme="dark"]{
+  --bg:#0f1318;--surface:#171c23;--fg:#e8ecf1;--muted:#9aa6b4;--line:#2b333d;--accent:#6aa7f0;--accent-ink:#0b1220;
+  --structural:#4fd1c0;--procedural:#7aa8ff;--guided:#f0b04f;--none:#ff8a80;--na:#9aa6b4;
+  --warn-bg:#2a2412;--warn-line:#7a6320;--shadow:none;}
+*{box-sizing:border-box}
+html{scroll-padding-top:7rem}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+.wrap{max-width:62rem;margin:0 auto;padding:0 16px}
+header.top{padding:1.25rem 0 .5rem}
+h1{font-size:1.6rem;line-height:1.2;margin:0 0 .25rem}
+h2{font-size:1.25rem;margin:1.5rem 0 .5rem;line-height:1.25}
+h3{font-size:1.05rem;margin:0;line-height:1.3}
+p{margin:.4rem 0}
+.lede{color:var(--muted);max-width:44rem}
+.privacy{display:inline-block;margin-top:.4rem;font-size:.9rem;color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0}
+button,.btn,select,input[type=text],input[type=date],textarea{font:inherit;color:inherit}
+button,.btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:.45rem .8rem;cursor:pointer;text-decoration:none;display:inline-block}
+button:hover,.btn:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow)}
+.scope{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.75rem}
+label.field{display:flex;flex-direction:column;gap:.25rem;font-size:.9rem;color:var(--muted)}
+label.field input,label.field select,label.field textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:.45rem .6rem;color:var(--fg)}
+.summary{position:sticky;top:0;z-index:5;background:var(--bg);padding:.5rem 0;border-bottom:1px solid var(--line);margin-top:1rem}
+.summary .row{display:flex;flex-wrap:wrap;gap:1rem;align-items:center}
+.score{font-size:1.9rem;font-weight:700;line-height:1}
+.band{font-weight:600}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+.meter{height:.5rem;border-radius:99px;background:var(--line);overflow:hidden;flex:1;min-width:8rem}
+.meter>span{display:block;height:100%;background:var(--accent)}
+nav.tabs{display:flex;gap:.25rem;margin-top:.5rem;flex-wrap:wrap}
+nav.tabs button{border-radius:8px 8px 0 0;border-bottom:none}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:.5rem;margin:1rem 0}
+.legend div{border-left:4px solid var(--line);padding:.25rem .6rem;font-size:.9rem;background:var(--surface);border-radius:0 8px 8px 0}
+.g-structural{border-left-color:var(--structural)!important}.g-procedural{border-left-color:var(--procedural)!important}
+.g-guided{border-left-color:var(--guided)!important}.g-none{border-left-color:var(--none)!important}
+.legend b{display:block}
+.level{margin-top:2rem}
+.level header{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:baseline;justify-content:space-between}
+.chip{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.04em;border:1px solid var(--line);border-radius:99px;padding:.05rem .55rem;color:var(--muted)}
+.control{margin-top:.75rem}
+.control .head{display:flex;flex-wrap:wrap;gap:.25rem .75rem;align-items:baseline;justify-content:space-between}
+.cid{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.85rem;margin-right:.4rem}
+.sev{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;border:1px solid var(--line);border-radius:6px;padding:.05rem .4rem;color:var(--muted)}
+.sev.critical{color:var(--none);border-color:var(--none);font-weight:700}
+fieldset{border:0;margin:.6rem 0 0;padding:0;display:flex;flex-wrap:wrap;gap:.4rem}
+legend{position:absolute;left:-9999px}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt span{display:inline-block;border:1px solid var(--line);border-left-width:4px;border-radius:8px;padding:.35rem .75rem;cursor:pointer;background:var(--bg);min-width:5.5rem;text-align:center}
+.opt input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.opt input:checked+span{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.opt input:disabled+span{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+.opt.o-structural span{border-left-color:var(--structural)}.opt.o-procedural span{border-left-color:var(--procedural)}
+.opt.o-guided span{border-left-color:var(--guided)}.opt.o-none span{border-left-color:var(--none)}.opt.o-na span{border-left-color:var(--na)}
+.clear{margin-left:auto;font-size:.85rem;background:none;border:none;color:var(--muted);text-decoration:underline;padding:.35rem}
+details{margin-top:.5rem}summary{cursor:pointer;color:var(--accent)}
+details textarea,details input[type=text]{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:.4rem .6rem;margin:.25rem 0 .5rem}
+ul.steps{margin:.4rem 0 .2rem 1.1rem;padding:0}
+.warn{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:var(--radius);padding:.6rem .9rem;margin:.75rem 0}
+table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid var(--line);padding:.45rem .5rem;text-align:left;vertical-align:top}
+th{font-size:.85rem;color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.stack{display:flex;height:.7rem;border-radius:99px;overflow:hidden;background:var(--line);min-width:9rem}
+.stack i{display:block;height:100%}
+.stack .s{background:var(--structural)}.stack .p{background:var(--procedural)}.stack .g{background:var(--guided)}.stack .n{background:var(--none)}
+.plan-item{margin-top:.6rem}
+.plan-item label{display:flex;gap:.6rem;align-items:flex-start;cursor:pointer}
+.plan-item input[type=checkbox]{margin-top:.35rem;width:1.1rem;height:1.1rem}
+.plan-item.done h3{text-decoration:line-through;color:var(--muted)}
+.say-not{display:grid;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));gap:.75rem}
+.say-not ul{margin:.3rem 0 0 1.1rem;padding:0}
+footer{margin:3rem 0 2rem;color:var(--muted);font-size:.875rem}
+[hidden]{display:none!important}
+.sr{position:absolute;left:-9999px}
+@media (max-width:600px){h1{font-size:1.35rem}.score{font-size:1.5rem}.opt span{min-width:4.6rem;padding:.35rem .5rem}}
+@media print{
+  body{background:#fff;color:#000;font-size:11pt}
+  :root{--bg:#fff;--surface:#fff;--fg:#000;--muted:#333;--line:#999}
+  .toolbar,nav.tabs,#assess,.summary,#scope-card,.legend,.noprint{display:none!important}
+  #results[hidden],#plan[hidden]{display:block!important}
+  .card{box-shadow:none;break-inside:avoid}
+  .plan-item{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <h1>safeAI: <span style="font-weight:500">Is it safe?</span></h1>
+  <p class="lede">Safe AI is more than secure data. This free self-assessment walks through <strong>seven levels</strong> of the question a board, a funder, or the people you serve might ask, shows where the gaps are, and gives you a plan to close them.</p>
+  <span class="privacy">Everything stays in this browser tab (and your browser's local storage). Nothing is uploaded.</span>
+  <div class="toolbar noprint">
+    <label class="btn">Import assessment<input id="importFile" type="file" accept=".json,.yaml,.yml,application/json,text/yaml" class="sr"></label>
+    <button id="exportJson" type="button">Save assessment (.json)</button>
+    <button id="exportMd" type="button" class="primary">Download report (.md)</button>
+    <button id="printBtn" type="button">Print or save as PDF</button>
+    <button id="resetBtn" type="button">Start over</button>
+  </div>
+</header>
+
+<section class="card" id="scope-card" aria-labelledby="scope-h">
+  <h2 id="scope-h" style="margin-top:0">About this assessment</h2>
+  <div class="scope">
+    <label class="field">Organization or product<input id="f-name" type="text" autocomplete="off"></label>
+    <label class="field">Who is answering<input id="f-assessor" type="text" autocomplete="off"></label>
+    <label class="field">Date<input id="f-date" type="date"></label>
+    <label class="field">I am assessing
+      <select id="f-mode">
+        <option value="both">Both: we use AI tools and build or configure AI features</option>
+        <option value="organization">Our organization's use of AI tools</option>
+        <option value="product">A software product or integration we build</option>
+      </select>
+    </label>
+  </div>
+  <label class="field" style="margin-top:.75rem">What is in scope (optional)<textarea id="f-description" rows="2"></textarea></label>
+  <label class="small" style="display:flex;gap:.5rem;margin-top:.75rem;align-items:flex-start"><input id="f-strict" type="checkbox" style="margin-top:.3rem"> <span>Strict scoring: count controls I have not answered as "None" (recommended before you share the result)</span></label>
+</section>
+
+<div class="summary" aria-live="polite" id="summary"></div>
+<nav class="tabs noprint" role="tablist" aria-label="Sections">
+  <button role="tab" id="tab-assess" aria-selected="true" aria-controls="assess" type="button">1. Assess</button>
+  <button role="tab" id="tab-results" aria-selected="false" aria-controls="results" type="button">2. Results</button>
+  <button role="tab" id="tab-plan" aria-selected="false" aria-controls="plan" type="button">3. Action plan</button>
+</nav>
+
+<main>
+  <section id="assess" role="tabpanel" aria-labelledby="tab-assess"></section>
+  <section id="results" role="tabpanel" aria-labelledby="tab-results" hidden></section>
+  <section id="plan" role="tabpanel" aria-labelledby="tab-plan" hidden></section>
+</main>
+
+<footer>
+  <p>safeAI is free and open source (Apache-2.0). This tool produces a planning aid from self-reported answers. It is not an audit, a certification, or legal advice.</p>
+  <p class="small">Framework version <span id="fwv"></span></p>
+</footer>
+</div>
+
+<script>/*__SCORING_JS__*/</script>
+<script>
+(function () {
+  'use strict';
+  var FW = /*__FRAMEWORK_JSON__*/null;
+  var S = window.SafeAI;
+  var KEY = 'safeai.assessment.v1';
+  var GLABEL = { none: 'None', guided: 'Guided', procedural: 'Procedural', structural: 'Structural', na: 'N/A' };
+  var state = freshState();
+  var layersById = {};
+  FW.layers.forEach(function (l) { layersById[l.id] = l; });
+  var $ = function (id) { return document.getElementById(id); };
+
+  function freshState() {
+    return {
+      scope: { name: '', assessor: '', date: new Date().toISOString().slice(0, 10), mode: 'both', description: '' },
+      answers: {}, strict: false, done: {}, tab: 'assess'
+    };
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ } }
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      if (s && s.scope && s.answers) { state = Object.assign(freshState(), s); }
+    } catch (e) { /* ignore */ }
+  }
+  function entry(id) {
+    if (!state.answers[id]) state.answers[id] = { answer: '', note: '', evidence: '' };
+    return state.answers[id];
+  }
+  function assessment() { return { scope: state.scope, answers: state.answers }; }
+  function scored() {
+    var r = S.compute(FW, assessment(), state.strict);
+    return { r: r, p: S.makePlan(r) };
+  }
+
+  /* ---------- legend + assess view ---------- */
+  function legendHtml() {
+    var order = ['structural', 'procedural', 'guided', 'none'];
+    return '<div class="legend" aria-label="Kinds of guarantee">' + order.map(function (k) {
+      var g = FW.guarantee_types[k];
+      return '<div class="g-' + k + '"><b>' + esc(g.label) + '</b>' + esc(g.meaning) + '</div>';
+    }).join('') + '</div>';
+  }
+
+  function controlHtml(c) {
+    var e = entry(c.id);
+    var max = S.RANK[c.max_guarantee];
+    var opts = ['none', 'guided', 'procedural', 'structural', 'na'].map(function (k) {
+      var disabled = k !== 'na' && S.RANK[k] > max;
+      var checked = e.answer === k;
+      return '<label class="opt o-' + k + '"><input type="radio" name="a-' + c.id + '" value="' + k + '" data-id="' + c.id + '"' +
+        (checked ? ' checked' : '') + (disabled ? ' disabled' : '') + '><span' +
+        (disabled ? ' title="This control cannot be enforced more strongly than ' + c.max_guarantee + '"' : '') + '>' + GLABEL[k] + '</span></label>';
+    }).join('');
+    return '<article class="card control" id="c-' + c.id + '">' +
+      '<div class="head"><h3><span class="cid">' + c.id + '</span>' + esc(c.title) + '</h3>' +
+      '<span><span class="sev ' + c.severity + '">' + c.severity + '</span></span></div>' +
+      '<p>' + esc(c.question) + '</p>' +
+      '<fieldset><legend>Answer for ' + esc(c.title) + '</legend>' + opts +
+      '<button type="button" class="clear" data-clear="' + c.id + '">Clear</button></fieldset>' +
+      '<p class="small muted">Strongest possible for this control: <b>' + c.max_guarantee + '</b></p>' +
+      '<details><summary>Note and evidence</summary>' +
+      '<label class="field">Note<textarea rows="2" data-note="' + c.id + '">' + esc(e.note) + '</textarea></label>' +
+      '<label class="field">Evidence (something a reviewer could look at)<input type="text" data-evidence="' + c.id + '" value="' + esc(e.evidence) + '"></label>' +
+      '<p class="small muted">Examples: ' + esc(c.evidence.join('; ')) + '</p></details>' +
+      '<details><summary>How to close this gap</summary><ul class="steps">' +
+      c.steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' +
+      '<p class="small muted">Effort: ' + c.effort + (c.quick_win ? ' · quick win' : '') + '</p></details></article>';
+  }
+
+  function renderAssess() {
+    var mode = state.scope.mode;
+    var h = legendHtml();
+    h += '<p class="small muted">For each control, choose the strongest statement that is <em>true today</em>. Guided is a good, honest answer: it shows you where to improve.</p>';
+    FW.layers.forEach(function (l) {
+      var cs = FW.controls.filter(function (c) { return c.layer === l.id && S.applies(c, mode); });
+      if (!cs.length) return;
+      h += '<section class="level" id="lvl-' + l.id + '"><header><div><h2 style="margin:0">Level ' + l.number + ': ' + esc(l.name) +
+        '</h2><p style="margin:.1rem 0" class="muted">' + esc(l.tagline) + '</p></div><span class="chip">' + l.verb + '</span></header>' +
+        '<p class="small muted">The question: ' + esc(l.question) + ' <br>Harm if we get it wrong: ' + esc(l.harm) + '</p>' +
+        cs.map(controlHtml).join('') + '</section>';
+    });
+    $('assess').innerHTML = h;
+  }
+
+  /* ---------- summary ---------- */
+  function renderSummary() {
+    var x = scored().r, o = x.overall, cov = x.coverage;
+    var pctWidth = o.score === null ? 0 : o.score;
+    var prov = !state.strict && cov.percent !== null && cov.percent < 50;
+    $('summary').innerHTML = '<div class="wrap" style="padding:0"><div class="row">' +
+      '<div><div class="score">' + (o.score === null ? 'n/a' : S.fmt(o.score)) + '<span class="muted small"> / 100</span></div>' +
+      '<div class="band small">' + (o.band ? (prov ? 'Provisional: fewer than half answered' : o.band + ' · indicative') : 'No answers yet') + '</div></div>' +
+      '<div class="meter" role="img" aria-label="Overall score"><span style="width:' + pctWidth + '%"></span></div>' +
+      '<div class="small muted">' + cov.answered + ' of ' + cov.applicable + ' answered' + (state.strict ? '' : ' (unanswered left out of score)') + '</div>' +
+      '</div></div>';
+  }
+
+  /* ---------- results ---------- */
+  function stackHtml(c) {
+    var total = c.structural + c.procedural + c.guided + c.none + c.unanswered;
+    if (!total) return '';
+    function w(n) { return (n / total * 100).toFixed(1) + '%'; }
+    return '<div class="stack" role="img" aria-label="' + c.structural + ' structural, ' + c.procedural + ' procedural, ' + c.guided + ' guided, ' + c.none + ' none">' +
+      '<i class="s" style="width:' + w(c.structural) + '"></i><i class="p" style="width:' + w(c.procedural) + '"></i>' +
+      '<i class="g" style="width:' + w(c.guided) + '"></i><i class="n" style="width:' + w(c.none) + '"></i></div>';
+  }
+
+  function renderResults() {
+    var x = scored().r, h = '';
+    h += '<h2>Results' + (state.scope.name ? ': ' + esc(state.scope.name) : '') + '</h2>';
+    h += '<p class="small muted">' + esc(S.DISCLAIMER) + '</p>';
+    if (x.coverage.answered < x.coverage.applicable && !x.strict) {
+      h += '<div class="warn"><b>' + (x.coverage.applicable - x.coverage.answered) + ' controls are not answered.</b> They are left out of these scores, so the real position may be worse than shown. Turn on strict scoring to count them as "None".</div>';
+    }
+    h += '<h2>What you can honestly say</h2><p><i>The AI is a guest, not an admin.</i></p><div class="card"><table><thead><tr><th></th><th>Statement</th><th>From your answers</th></tr></thead><tbody>' +
+      x.verbs.map(function (v) {
+        return '<tr><td><b>' + v.verb + '</b></td><td>' + esc(v.clause) + '</td><td>' + esc(S.STATUS_TEXT[v.status]) + ' (' + S.fmt(v.score) + ')</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    h += '<div class="say-not" style="margin-top:.75rem"><div class="card"><b>Say</b><ul><li>"Enforced in code" only for controls you answered Structural, with evidence.</li><li>"Requires approval" for Procedural controls.</li><li>"Recommended" for Guided controls.</li><li>"Here is what is in place and what is coming", with dates only once committed.</li></ul></div>' +
+      '<div class="card"><b>Do not say</b><ul><li>"100% safe", "provably ethical", or "AI you never have to check".</li><li>"Enforced" for anything that depends on the AI following instructions.</li><li>Roadmap items in the present tense.</li><li>"Your data is never used for training" without naming the account type it depends on.</li></ul></div></div>';
+
+    h += '<h2>The seven levels</h2><div class="card" style="overflow-x:auto"><table><thead><tr><th>Level</th><th class="num">Score</th><th>Mix of guarantees</th><th class="num">Not answered</th></tr></thead><tbody>' +
+      x.layers.map(function (l) {
+        return '<tr><td>L' + l.number + ' ' + esc(l.name) + ' <span class="chip">' + l.verb + '</span></td><td class="num">' + S.fmt(l.score) + '</td><td>' + stackHtml(l.counts) + '</td><td class="num">' + l.counts.unanswered + '</td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<p class="small muted" style="margin-top:.6rem">Bar colors: teal structural, blue procedural, amber guided, red none.</p></div>';
+
+    if (x.unevidenced.length) {
+      var byId = {}; FW.controls.forEach(function (c) { byId[c.id] = c; });
+      h += '<h2>Claims without evidence</h2><div class="warn">These were marked Procedural or Structural with no note or evidence. Confirm each before you rely on or repeat the claim.<ul>' +
+        x.unevidenced.map(function (id) { return '<li>' + id + ' ' + esc(byId[id].title) + '</li>'; }).join('') + '</ul></div>';
+    }
+    $('results').innerHTML = h;
+  }
+
+  /* ---------- plan ---------- */
+  function planItemHtml(i, byId) {
+    var c = byId[i.id], done = !!state.done[i.id];
+    return '<article class="card plan-item' + (done ? ' done' : '') + '"><label><input type="checkbox" data-done="' + i.id + '"' + (done ? ' checked' : '') + '><div>' +
+      '<h3><span class="cid">' + i.id + '</span>' + esc(i.title) + ' <span class="sev ' + i.severity + '">' + i.severity + '</span></h3>' +
+      '<p class="small muted">' + esc(S.move(i)) + '</p>' +
+      '<ul class="steps">' + c.steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div></label></article>';
+  }
+
+  function renderPlan() {
+    var sp = scored(), p = sp.p, byId = {};
+    FW.controls.forEach(function (c) { byId[c.id] = c; });
+    var h = '<h2>Action plan</h2><p class="small muted">Tick items off as you finish them, then update the control\'s answer on the Assess tab and compare your score.</p>';
+    if (!p.count) { $('plan').innerHTML = h + '<p>No gaps found among the controls you answered. Keep your evidence current.</p>'; return; }
+    var crit = p.critical.filter(function (i) { return ['none', 'unanswered', 'guided'].indexOf(i.current) !== -1; });
+    if (crit.length) {
+      h += '<h2>Critical gaps first</h2><div class="card"><ul class="steps">' + crit.map(function (i) {
+        return '<li><b>' + i.id + ' ' + esc(i.title) + '</b>: ' + esc(S.move(i)) + '</li>'; }).join('') + '</ul></div>';
+    }
+    var names = { quick: 'Quick wins (low effort, weeks)', next: 'Build next (medium effort, a few months)', later: 'Longer term (high effort)' };
+    ['quick', 'next', 'later'].forEach(function (k) {
+      if (!p.horizons[k].length) return;
+      h += '<h2>' + names[k] + '</h2>' + p.horizons[k].map(function (i) { return planItemHtml(i, byId); }).join('');
+    });
+    $('plan').innerHTML = h;
+  }
+
+  function renderAll() { renderSummary(); renderResults(); renderPlan(); }
+
+  /* ---------- tabs ---------- */
+  function showTab(t) {
+    state.tab = t;
+    ['assess', 'results', 'plan'].forEach(function (id) {
+      $(id).hidden = id !== t;
+      $('tab-' + id).setAttribute('aria-selected', id === t ? 'true' : 'false');
+    });
+    if (t === 'results') renderResults();
+    if (t === 'plan') renderPlan();
+    save();
+  }
+
+  /* ---------- events ---------- */
+  function bind() {
+    var assess = $('assess');
+    assess.addEventListener('change', function (ev) {
+      var t = ev.target;
+      if (t.matches('input[type=radio][data-id]')) { entry(t.dataset.id).answer = t.value; save(); renderSummary(); }
+    });
+    assess.addEventListener('input', function (ev) {
+      var t = ev.target;
+      if (t.dataset.note) { entry(t.dataset.note).note = t.value; save(); }
+      if (t.dataset.evidence) { entry(t.dataset.evidence).evidence = t.value; save(); }
+    });
+    assess.addEventListener('click', function (ev) {
+      var id = ev.target.dataset && ev.target.dataset.clear;
+      if (!id) return;
+      entry(id).answer = '';
+      var radios = assess.querySelectorAll('input[name="a-' + id + '"]');
+      Array.prototype.forEach.call(radios, function (r) { r.checked = false; });
+      save(); renderSummary();
+    });
+    $('plan').addEventListener('change', function (ev) {
+      var id = ev.target.dataset && ev.target.dataset.done;
+      if (!id) return;
+      if (ev.target.checked) state.done[id] = true; else delete state.done[id];
+      ev.target.closest('.plan-item').classList.toggle('done', ev.target.checked);
+      save();
+    });
+    ['name', 'assessor', 'date', 'description'].forEach(function (k) {
+      $('f-' + k).addEventListener('input', function (ev) { state.scope[k] = ev.target.value; save(); });
+    });
+    $('f-mode').addEventListener('change', function (ev) { state.scope.mode = ev.target.value; save(); renderAssess(); renderAll(); });
+    $('f-strict').addEventListener('change', function (ev) { state.strict = ev.target.checked; save(); renderAll(); });
+    ['assess', 'results', 'plan'].forEach(function (id) {
+      $('tab-' + id).addEventListener('click', function () { showTab(id); });
+    });
+    $('exportJson').addEventListener('click', function () {
+      download('safeai-assessment.json', S.exportAssessment(FW, assessment()), 'application/json');
+    });
+    $('exportMd').addEventListener('click', function () {
+      var sp = scored();
+      download('safeai-report.md', S.toMarkdown(sp.r, sp.p, FW), 'text/markdown');
+    });
+    $('printBtn').addEventListener('click', function () { renderResults(); renderPlan(); window.print(); });
+    $('resetBtn').addEventListener('click', function () {
+      if (!window.confirm('Clear all answers and start over? Export your assessment first if you want to keep it.')) return;
+      state = freshState(); save(); syncFields(); renderAssess(); renderAll(); showTab('assess');
+    });
+    $('importFile').addEventListener('change', function (ev) {
+      var f = ev.target.files && ev.target.files[0];
+      if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () {
+        try {
+          var a = S.parseAssessmentFile(String(rd.result));
+          state.scope = Object.assign(freshState().scope, a.scope);
+          state.answers = a.answers;
+          save(); syncFields(); renderAssess(); renderAll(); showTab('assess');
+        } catch (e) { window.alert('Could not read that file. Use a .json file saved from this tool, or a .yaml file created by `safeai init`.'); }
+      };
+      rd.readAsText(f);
+      ev.target.value = '';
+    });
+  }
+
+  function download(name, text, type) {
+    var blob = new Blob([text], { type: type + ';charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
+  function syncFields() {
+    ['name', 'assessor', 'date', 'description'].forEach(function (k) { $('f-' + k).value = state.scope[k] || ''; });
+    $('f-mode').value = state.scope.mode || 'both';
+    $('f-strict').checked = !!state.strict;
+  }
+
+  load();
+  $('fwv').textContent = FW.version;
+  syncFields();
+  renderAssess();
+  renderAll();
+  bind();
+  showTab(state.tab || 'assess');
+})();
+</script>
+</body>
+</html>

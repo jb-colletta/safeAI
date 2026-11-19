@@ -1,0 +1,595 @@
+# safeAI assessment
+#
+# For each control below, set `answer:` to one of:
+#   structural   enforced in code or configuration; it cannot happen whatever the AI does
+#   procedural   it cannot happen without a named person's approval or a recorded process
+#   guided       people or the AI are told what to do; nothing ensures it
+#   none         no control exists yet
+#   na           does not apply to you (explain in `note`)
+# Leave `answer:` blank for controls you have not assessed yet.
+#
+# Be honest rather than flattering. "guided" is a perfectly good answer: it tells you
+# where to improve. Use `evidence:` to name something a reviewer could look at.
+
+safeai_assessment: 1
+framework_version: "0.1.0"
+scope:
+  name: "Example Community Services (fictional)"            # the organization, system, or product being assessed
+  mode: both                # organization | product | both
+  assessor: "Example assessor"
+  date: "2026-01-15"
+  description: "A fictional mid-sized service non-profit with a CRM, a staff chatbot, and an AI drafting tool. Illustrative only."
+answers:
+
+  # ======================================================================
+  # Level 1: Data protection (SEE)
+  # Your people's data stays protected.
+  # ======================================================================
+
+  # Data inventory and classification  [high; strongest possible: procedural]
+  #   Do you know which data the AI systems in scope can reach, and is that data
+  #   classified by sensitivity?
+  L1.01:
+    answer: procedural
+    note: "Data register kept by operations."
+    evidence: "data-register.xlsx"
+
+  # AI inherits the user's own permissions  [critical; strongest possible: structural]
+  #   Does the AI act with the signed-in person's own access rights, so it can never see
+  #   more than that person can?
+  L1.02:
+    answer: structural
+    note: "Chatbot connects through each user's own sign-in."
+    evidence: "SSO config; tested with low-privilege user"
+
+  # Restricted data is blocked from AI paths by default  [critical; strongest possible: structural]
+  #   Are your most sensitive data sets (credentials, payment details, case files)
+  #   technically unreachable by the AI unless someone deliberately opens them?
+  L1.03:
+    answer: structural
+    note: "Payment and credential tables blocked."
+    evidence: "block-list.yaml"
+
+  # Personal data is masked before it reaches the model  [critical; strongest possible: structural]
+  #   Are sensitive fields (email, phone, birth date, ID numbers, addresses) masked or
+  #   removed in code before the AI receives them?
+  L1.04:
+    answer: guided
+    note: "We ask staff to avoid personal details but nothing masks them."
+    evidence: ""
+
+  # Personal data inside free text is detected  [high; strongest possible: structural]
+  #   Do you detect and mask personal data typed into notes, comments, or message fields,
+  #   not only data in labeled fields?
+  L1.05:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # Staff know what not to paste into AI tools  [high; strongest possible: guided]
+  #   Do staff and volunteers have clear, short guidance on what data must never be typed
+  #   or pasted into an AI tool?
+  L1.06:
+    answer: guided
+    note: "One-page guidance in onboarding."
+    evidence: "onboarding-pack.pdf"
+
+  # Pass-through handling and minimal retention  [high; strongest possible: structural]
+  #   Do your AI integrations avoid storing constituent records, and do they keep prompts,
+  #   outputs, and logs only as long as needed?
+  L1.07:
+    answer: procedural
+    note: "Retention reviewed once; no automatic deletion yet."
+    evidence: ""
+
+  # Privacy obligations cover AI use  [high; strongest possible: procedural]
+  #   Do your privacy notice, consent practices, and (where required) impact assessments
+  #   cover the use of AI with personal data?
+  L1.08:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # ======================================================================
+  # Level 2: Vendor and model trust (SEE)
+  # Your data is not used to train AI, and you control the account.
+  # ======================================================================
+
+  # Vendor data terms reviewed  [critical; strongest possible: procedural]
+  #   Have you read and recorded what each AI vendor does with your data: training,
+  #   retention, human review, deletion?
+  L2.01:
+    answer: procedural
+    note: "Reviewed in December for both vendors."
+    evidence: "vendor-review-2025-12.md"
+
+  # Organization-managed accounts, not personal logins  [high; strongest possible: structural]
+  #   Do staff use AI through accounts your organization manages, so you control seats,
+  #   settings, and offboarding?
+  L2.02:
+    answer: procedural
+    note: "Business accounts issued; personal accounts not blocked."
+    evidence: "Account console"
+
+  # Model and sub-processor inventory  [medium; strongest possible: procedural]
+  #   Can you say which AI model and which companies process your data, and where?
+  L2.03:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # Contracts and data processing terms  [high; strongest possible: procedural]
+  #   Are there written agreements covering confidentiality, data processing, breach
+  #   notification, and deletion on exit?
+  L2.04:
+    answer: procedural
+    note: "DPA signed with both vendors."
+    evidence: "signed-dpas/"
+
+  # Vendor safety rules and values are known  [medium; strongest possible: procedural]
+  #   Do you know which safety rules and published values the underlying model brings, and
+  #   have you told your leadership?
+  L2.05:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Your own commitment on constituent data  [high; strongest possible: procedural]
+  #   Have you made, and published, a commitment about what you yourself do with
+  #   constituent data in AI contexts (no selling, no training, no pooling without
+  #   consent)?
+  L2.06:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # Environmental and labor due diligence  [medium; strongest possible: guided]
+  #   Have you considered, and recorded, what the vendor discloses about energy and water
+  #   use and the working conditions of the people who label data and moderate content?
+  L2.07:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Re-assessment on vendor or model change  [medium; strongest possible: procedural]
+  #   Do you re-run this assessment, and your behavioral tests, when a vendor changes its
+  #   terms, or a model is swapped or updated?
+  L2.08:
+    answer:
+    note: ""
+    evidence: ""
+
+  # ======================================================================
+  # Level 3: Delegation and authority (DO)
+  # It does only what you grant, and it stops for a person.
+  # ======================================================================
+
+  # Allow-list of AI actions, deny by default  [critical; strongest possible: structural]
+  #   Is every action the AI can take (read, create, update, send, delete) explicitly
+  #   granted per role, with everything else denied?
+  L3.01:
+    answer: procedural
+    note: "Roles listed in a spreadsheet, enforced by tool settings only partly."
+    evidence: ""
+
+  # Write and send capabilities are off until a decision is recorded  [high; strongest possible: procedural]
+  #   Is the ability to change records or send messages switched off by default, and
+  #   turned on only through a recorded decision?
+  L3.02:
+    answer: procedural
+    note: "Write tools off until director approves."
+    evidence: "approval-2025-11.pdf"
+
+  # Draft versus commit  [critical; strongest possible: structural]
+  #   Can the AI draft or stage a change or message, with a person required to commit or
+  #   send it, unless a grant says otherwise?
+  L3.03:
+    answer: none
+    note: "AI can send email directly."
+    evidence: ""
+
+  # Irreversible actions are never autonomous  [critical; strongest possible: structural]
+  #   Do deletions, bulk messages, payments, and changes to protected records always need
+  #   a human commit, whatever the grant?
+  L3.04:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # Every grant has a named signer  [high; strongest possible: procedural]
+  #   For each thing the AI is allowed to do, is there a named person who signed off on
+  #   that grant?
+  L3.05:
+    answer: procedural
+    note: "Director signs grants."
+    evidence: "grant-log"
+
+  # Escalation is designed, not an error path  [medium; strongest possible: procedural]
+  #   Is there a defined point at which the AI must stop and hand a decision to a person,
+  #   with a record of what was asked and why it stopped?
+  L3.06:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Prompt-injection containment  [critical; strongest possible: structural]
+  #   Is content from outside (uploads, inbound email, web pages, form submissions)
+  #   treated as untrusted, with stricter limits on what the AI may do after reading it?
+  L3.07:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # Volume and rate limits  [high; strongest possible: structural]
+  #   Are there hard caps on recipients per message, records changed per run, and spend
+  #   per period?
+  L3.08:
+    answer: structural
+    note: "50 recipients per send."
+    evidence: "mail settings"
+
+  # Policy travels with delegated work  [medium; strongest possible: structural]
+  #   When one AI agent or tool hands work to another, do your constraints travel with it?
+  L3.09:
+    answer: na
+    note: ""
+    evidence: ""
+
+  # ======================================================================
+  # Level 4: Protection of the vulnerable (DO)
+  # Children and people in crisis are protected by rules no setting can lower.
+  # ======================================================================
+
+  # Protected people and records are defined  [critical; strongest possible: procedural]
+  #   Have you written down who counts as a protected person (minors, vulnerable adults,
+  #   survivors, clients in crisis) and which records concern them?
+  L4.01:
+    answer: procedural
+    note: "Safeguarding lead defined groups and records."
+    evidence: "safeguarding-policy.pdf"
+
+  # Protected records blocked or masked by default  [critical; strongest possible: structural]
+  #   Are safeguarding, case, counseling, health, and similar records blocked or masked
+  #   from AI paths unless a named person has opened them?
+  L4.02:
+    answer: guided
+    note: "Told staff not to use case notes with AI."
+    evidence: ""
+
+  # Images and identifying details of minors stay off AI paths  [critical; strongest possible: structural]
+  #   Are photos and identifying details of children unreachable by AI, and is AI
+  #   generation or editing of images of identifiable children prohibited?
+  L4.03:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # No AI-initiated contact with minors without required adults  [critical; strongest possible: structural]
+  #   Is it impossible for the AI to send a message to a minor without a parent, guardian,
+  #   or other required adult included, where your policy requires it?
+  L4.04:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # Abuse, self-harm, and crisis content goes to a person  [critical; strongest possible: procedural]
+  #   Is content about abuse, self-harm, or immediate danger never auto-sent, and routed
+  #   to a named person and your reporting workflow?
+  L4.05:
+    answer: procedural
+    note: "Disclosures go to safeguarding lead by policy."
+    evidence: "policy section 4"
+
+  # Urgent need is never queued behind review  [high; strongest possible: structural]
+  #   Can a request involving urgent human need or danger skip any approval or review
+  #   queue meant for routine content?
+  L4.06:
+    answer:
+    note: ""
+    evidence: ""
+
+  # AI informs; people decide eligibility and priority  [critical; strongest possible: procedural]
+  #   When AI contributes to decisions about aid, services, or care priority, is a named
+  #   person always the decider, and is their decision recorded?
+  L4.07:
+    answer: procedural
+    note: "Caseworkers decide eligibility. AI only summarises."
+    evidence: "decision form v3"
+
+  # Fairness checks on AI rankings  [high; strongest possible: procedural]
+  #   Before AI rankings or recommendations are used (care queues, aid, outreach), do you
+  #   check that they do not systematically disadvantage a group?
+  L4.08:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # AI scores and classifications of people are visible  [high; strongest possible: procedural]
+  #   Is any AI-produced score, label, or classification of a person disclosed to staff
+  #   and explainable to them?
+  L4.09:
+    answer:
+    note: ""
+    evidence: ""
+
+  # No appeals that exploit vulnerability  [high; strongest possible: procedural]
+  #   Is AI prevented from tailoring fundraising, engagement, or persuasion to exploit
+  #   grief, crisis, age, or isolation?
+  L4.10:
+    answer: guided
+    note: ""
+    evidence: ""
+
+  # Protections are on by default and can only be raised  [high; strongest possible: structural]
+  #   Do protections for vulnerable people ship enabled, and can an administrator only
+  #   strengthen them, never weaken them?
+  L4.11:
+    answer:
+    note: ""
+    evidence: ""
+
+  # ======================================================================
+  # Level 5: Mission and values fidelity (SAY)
+  # It is held to what your organization stands for.
+  # ======================================================================
+
+  # Mission and commitments are written down for AI  [high; strongest possible: procedural]
+  #   Have you written down your mission, firm commitments, and red lines in a form that
+  #   an AI can be given and a person can audit?
+  L5.01:
+    answer: procedural
+    note: "Values file approved by board."
+    evidence: "values-file-v1.md"
+
+  # Values file is given to the AI as context  [medium; strongest possible: guided]
+  #   Is that values file loaded as context for the AI systems in scope?
+  L5.02:
+    answer: guided
+    note: "Loaded into the drafting tool."
+    evidence: ""
+
+  # Enforced commitments are separated from guidance  [high; strongest possible: procedural]
+  #   Can you show which of your commitments are enforced by a gate or a person, and which
+  #   are guidance only?
+  L5.03:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Your values are authored by you  [high; strongest possible: procedural]
+  #   Were your values written and approved by your own governance, rather than supplied
+  #   as a default by a vendor or developer?
+  L5.04:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Claims are sourced and estimates are marked  [high; strongest possible: procedural]
+  #   Must AI-drafted content that states facts or speaks for your organization cite
+  #   sources and mark estimates, with unsourced claims flagged for a reviewer?
+  L5.05:
+    answer: guided
+    note: ""
+    evidence: ""
+
+  # Open questions are marked as opinion  [medium; strongest possible: guided]
+  #   When a question is genuinely contested or your organization has no settled position,
+  #   does the AI say so and mark its answer as opinion?
+  L5.06:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Behavioral regression tests  [high; strongest possible: procedural]
+  #   Do you run a repeatable set of test questions, seeded from your values and from
+  #   known drift, whenever a model or prompt changes?
+  L5.07:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # Public-facing AI content is reviewed before release  [high; strongest possible: procedural]
+  #   Is AI-drafted content that goes out in your name (publications, appeals, donor
+  #   communications, public statements) reviewed by a person before release?
+  L5.08:
+    answer: procedural
+    note: "Comms director reviews all external drafts."
+    evidence: "review-log"
+
+  # Corrections can come from below  [medium; strongest possible: procedural]
+  #   Is there a channel for staff, chapters, or the community to challenge or propose
+  #   changes to the AI's rules, rather than only inheriting them?
+  L5.09:
+    answer:
+    note: ""
+    evidence: ""
+
+  # ======================================================================
+  # Level 6: The human boundary (SAY)
+  # It represents; it never impersonates or replaces a person.
+  # ======================================================================
+
+  # No signing as a person without their approval  [critical; strongest possible: structural]
+  #   Is it impossible for the AI to send something signed as a named staff member,
+  #   leader, or professional unless that person approved this specific message?
+  L6.01:
+    answer: procedural
+    note: "Staff sign their own emails; tool cannot send as them yet."
+    evidence: ""
+
+  # AI is disclosed where it matters  [high; strongest possible: structural]
+  #   Do public-facing chatbots identify themselves as AI, and is AI-drafted content
+  #   labeled wherever your policy or the law requires?
+  L6.02:
+    answer: structural
+    note: "Chatbot opens by saying it is an AI."
+    evidence: "chatbot screenshot"
+
+  # No simulated care, friendship, or companionship  [high; strongest possible: procedural]
+  #   Do you avoid member-facing AI that simulates care or companionship, and are care
+  #   messages sent and followed up by a named person?
+  L6.03:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Roles that need a human route to one  [critical; strongest possible: procedural]
+  #   Do requests for counseling, clinical, legal, or other professional judgment route to
+  #   a qualified person rather than being answered by the AI?
+  L6.04:
+    answer: procedural
+    note: "Counselling requests route to the duty counsellor."
+    evidence: "routing doc"
+
+  # Confidential disclosures are never solicited or recorded by AI  [high; strongest possible: procedural]
+  #   Is AI prevented from soliciting, recording in records, or sending confidential or
+  #   privileged disclosures (counseling, legal, medical, or similar)?
+  L6.05:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Positive scope: what the AI is for  [medium; strongest possible: guided]
+  #   Have you written down what the AI is for, so that a refusal can come with a helpful
+  #   alternative?
+  L6.06:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Guarding against over-reliance  [medium; strongest possible: procedural]
+  #   Do you monitor whether staff accept AI output without scrutiny, and take steps to
+  #   keep human judgment strong?
+  L6.07:
+    answer:
+    note: ""
+    evidence: ""
+
+  # A human is always reachable  [high; strongest possible: structural]
+  #   Can anyone using a public-facing AI reach a person easily?
+  L6.08:
+    answer: structural
+    note: "Talk to a person button in chatbot."
+    evidence: "chatbot screenshot"
+
+  # ======================================================================
+  # Level 7: Accountability and governance (ANSWER)
+  # You set the rules, and you can see and stop every decision.
+  # ======================================================================
+
+  # Named owner for AI  [critical; strongest possible: procedural]
+  #   Is there a named executive owner for AI use, and a group or role that reviews it?
+  L7.01:
+    answer: procedural
+    note: "Director of operations is the owner."
+    evidence: "role description"
+
+  # Approved AI use policy  [high; strongest possible: guided]
+  #   Do you have a short AI use policy that leadership approved and staff received?
+  L7.02:
+    answer: guided
+    note: "Policy approved; acknowledgement not tracked."
+    evidence: "ai-policy.pdf"
+
+  # Register of AI systems and use cases  [high; strongest possible: procedural]
+  #   Do you keep a current list of AI systems and use cases, each with a risk rating?
+  L7.03:
+    answer: procedural
+    note: ""
+    evidence: "ai-register.xlsx"
+
+  # Responsibility map  [high; strongest possible: procedural]
+  #   For each deployment, is it written down what the vendor, the software provider, and
+  #   your organization each answer for?
+  L7.04:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Audit log of AI activity  [critical; strongest possible: structural]
+  #   Does a log record who used which AI tool, with what inputs and actions, and what the
+  #   outcome was?
+  L7.05:
+    answer: structural
+    note: "Vendor console logs every request."
+    evidence: ""
+
+  # Log records authority, not only activity  [high; strongest possible: structural]
+  #   Do your logs show who granted the permission, under which policy version, whether a
+  #   person overrode a decision, and whether the AI escalated or delegated?
+  L7.06:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # Kill switch  [critical; strongest possible: structural]
+  #   Can an administrator switch AI access off immediately, for one user, one tool, or
+  #   everything?
+  L7.07:
+    answer: structural
+    note: "Admin console can disable all AI access."
+    evidence: "runbook"
+
+  # AI incident response  [high; strongest possible: procedural]
+  #   Do you have a plan for AI incidents (data exposure, harmful message, wrong action),
+  #   including who is told and how you learn from it?
+  L7.08:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # Recourse for affected people  [high; strongest possible: procedural]
+  #   Can a person affected by an AI-informed decision ask for review by a human, and can
+  #   staff reconstruct how the decision was reached?
+  L7.09:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Impact assessment before higher-risk use  [high; strongest possible: procedural]
+  #   Before enabling write, send, or decision-support uses, do you complete a short
+  #   assessment of impact on people, especially the most vulnerable?
+  L7.10:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # Staff AI literacy  [medium; strongest possible: guided]
+  #   Have staff and volunteers who use AI been taught what it can and cannot do, and how
+  #   to spot errors?
+  L7.11:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Claims discipline  [high; strongest possible: procedural]
+  #   Do you check that nothing you tell supporters, funders, or constituents about AI
+  #   safety describes a guided control as if it were enforced?
+  L7.12:
+    answer: none
+    note: ""
+    evidence: ""
+
+  # Red-team testing  [high; strongest possible: procedural]
+  #   Do you test your safeguards with deliberate attempts to break them, including
+  #   instructions hidden in documents?
+  L7.13:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Change control and review rhythm  [medium; strongest possible: procedural]
+  #   Are your AI policies versioned, and are they reviewed on a regular schedule and
+  #   whenever something material changes?
+  L7.14:
+    answer:
+    note: ""
+    evidence: ""
+
+  # Policy inheritance across chapters or affiliates  [medium; strongest possible: structural]
+  #   If you have chapters, affiliates, or customers, can a parent set rules that the
+  #   others inherit and can tighten but not weaken?
+  L7.15:
+    answer:
+    note: ""
+    evidence: ""

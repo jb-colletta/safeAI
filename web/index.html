@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>safeAI: Is it safe?</title>
+<meta name="description" content="A free self-assessment for non-profits: find the gaps in your AI safety across seven levels, then close them. Runs entirely in your browser.">
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--fg:#17202a;--muted:#566170;--line:#d6dbe2;--accent:#1d5fa8;--accent-ink:#fff;
+  --structural:#0f766e;--procedural:#1d4ed8;--guided:#a85a00;--none:#b42318;--na:#566170;
+  --warn-bg:#fff6e0;--warn-line:#e6b34d;--shadow:0 1px 2px rgba(20,30,50,.08);--radius:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1318;--surface:#171c23;--fg:#e8ecf1;--muted:#9aa6b4;--line:#2b333d;--accent:#6aa7f0;--accent-ink:#0b1220;
+  --structural:#4fd1c0;--procedural:#7aa8ff;--guided:#f0b04f;--none:#ff8a80;--na:#9aa6b4;
+  --warn-bg:#2a2412;--warn-line:#7a6320;--shadow:none;}}
+:root[data-theme="dark"]{
+  --bg:#0f1318;--surface:#171c23;--fg:#e8ecf1;--muted:#9aa6b4;--line:#2b333d;--accent:#6aa7f0;--accent-ink:#0b1220;
+  --structural:#4fd1c0;--procedural:#7aa8ff;--guided:#f0b04f;--none:#ff8a80;--na:#9aa6b4;
+  --warn-bg:#2a2412;--warn-line:#7a6320;--shadow:none;}
+*{box-sizing:border-box}
+html{scroll-padding-top:7rem}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+.wrap{max-width:62rem;margin:0 auto;padding:0 16px}
+header.top{padding:1.25rem 0 .5rem}
+h1{font-size:1.6rem;line-height:1.2;margin:0 0 .25rem}
+h2{font-size:1.25rem;margin:1.5rem 0 .5rem;line-height:1.25}
+h3{font-size:1.05rem;margin:0;line-height:1.3}
+p{margin:.4rem 0}
+.lede{color:var(--muted);max-width:44rem}
+.privacy{display:inline-block;margin-top:.4rem;font-size:.9rem;color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0}
+button,.btn,select,input[type=text],input[type=date],textarea{font:inherit;color:inherit}
+button,.btn{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:.45rem .8rem;cursor:pointer;text-decoration:none;display:inline-block}
+button:hover,.btn:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1rem;box-shadow:var(--shadow)}
+.scope{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.75rem}
+label.field{display:flex;flex-direction:column;gap:.25rem;font-size:.9rem;color:var(--muted)}
+label.field input,label.field select,label.field textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:.45rem .6rem;color:var(--fg)}
+.summary{position:sticky;top:0;z-index:5;background:var(--bg);padding:.5rem 0;border-bottom:1px solid var(--line);margin-top:1rem}
+.summary .row{display:flex;flex-wrap:wrap;gap:1rem;align-items:center}
+.score{font-size:1.9rem;font-weight:700;line-height:1}
+.band{font-weight:600}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+.meter{height:.5rem;border-radius:99px;background:var(--line);overflow:hidden;flex:1;min-width:8rem}
+.meter>span{display:block;height:100%;background:var(--accent)}
+nav.tabs{display:flex;gap:.25rem;margin-top:.5rem;flex-wrap:wrap}
+nav.tabs button{border-radius:8px 8px 0 0;border-bottom:none}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:.5rem;margin:1rem 0}
+.legend div{border-left:4px solid var(--line);padding:.25rem .6rem;font-size:.9rem;background:var(--surface);border-radius:0 8px 8px 0}
+.g-structural{border-left-color:var(--structural)!important}.g-procedural{border-left-color:var(--procedural)!important}
+.g-guided{border-left-color:var(--guided)!important}.g-none{border-left-color:var(--none)!important}
+.legend b{display:block}
+.level{margin-top:2rem}
+.level header{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:baseline;justify-content:space-between}
+.chip{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.04em;border:1px solid var(--line);border-radius:99px;padding:.05rem .55rem;color:var(--muted)}
+.control{margin-top:.75rem}
+.control .head{display:flex;flex-wrap:wrap;gap:.25rem .75rem;align-items:baseline;justify-content:space-between}
+.cid{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.85rem;margin-right:.4rem}
+.sev{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;border:1px solid var(--line);border-radius:6px;padding:.05rem .4rem;color:var(--muted)}
+.sev.critical{color:var(--none);border-color:var(--none);font-weight:700}
+fieldset{border:0;margin:.6rem 0 0;padding:0;display:flex;flex-wrap:wrap;gap:.4rem}
+legend{position:absolute;left:-9999px}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt span{display:inline-block;border:1px solid var(--line);border-left-width:4px;border-radius:8px;padding:.35rem .75rem;cursor:pointer;background:var(--bg);min-width:5.5rem;text-align:center}
+.opt input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.opt input:checked+span{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.opt input:disabled+span{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+.opt.o-structural span{border-left-color:var(--structural)}.opt.o-procedural span{border-left-color:var(--procedural)}
+.opt.o-guided span{border-left-color:var(--guided)}.opt.o-none span{border-left-color:var(--none)}.opt.o-na span{border-left-color:var(--na)}
+.clear{margin-left:auto;font-size:.85rem;background:none;border:none;color:var(--muted);text-decoration:underline;padding:.35rem}
+details{margin-top:.5rem}summary{cursor:pointer;color:var(--accent)}
+details textarea,details input[type=text]{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:.4rem .6rem;margin:.25rem 0 .5rem}
+ul.steps{margin:.4rem 0 .2rem 1.1rem;padding:0}
+.warn{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:var(--radius);padding:.6rem .9rem;margin:.75rem 0}
+table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid var(--line);padding:.45rem .5rem;text-align:left;vertical-align:top}
+th{font-size:.85rem;color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.stack{display:flex;height:.7rem;border-radius:99px;overflow:hidden;background:var(--line);min-width:9rem}
+.stack i{display:block;height:100%}
+.stack .s{background:var(--structural)}.stack .p{background:var(--procedural)}.stack .g{background:var(--guided)}.stack .n{background:var(--none)}
+.plan-item{margin-top:.6rem}
+.plan-item label{display:flex;gap:.6rem;align-items:flex-start;cursor:pointer}
+.plan-item input[type=checkbox]{margin-top:.35rem;width:1.1rem;height:1.1rem}
+.plan-item.done h3{text-decoration:line-through;color:var(--muted)}
+.say-not{display:grid;grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));gap:.75rem}
+.say-not ul{margin:.3rem 0 0 1.1rem;padding:0}
+footer{margin:3rem 0 2rem;color:var(--muted);font-size:.875rem}
+[hidden]{display:none!important}
+.sr{position:absolute;left:-9999px}
+@media (max-width:600px){h1{font-size:1.35rem}.score{font-size:1.5rem}.opt span{min-width:4.6rem;padding:.35rem .5rem}}
+@media print{
+  body{background:#fff;color:#000;font-size:11pt}
+  :root{--bg:#fff;--surface:#fff;--fg:#000;--muted:#333;--line:#999}
+  .toolbar,nav.tabs,#assess,.summary,#scope-card,.legend,.noprint{display:none!important}
+  #results[hidden],#plan[hidden]{display:block!important}
+  .card{box-shadow:none;break-inside:avoid}
+  .plan-item{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <h1>safeAI: <span style="font-weight:500">Is it safe?</span></h1>
+  <p class="lede">Safe AI is more than secure data. This free self-assessment walks through <strong>seven levels</strong> of the question a board, a funder, or the people you serve might ask, shows where the gaps are, and gives you a plan to close them.</p>
+  <span class="privacy">Everything stays in this browser tab (and your browser's local storage). Nothing is uploaded.</span>
+  <div class="toolbar noprint">
+    <label class="btn">Import assessment<input id="importFile" type="file" accept=".json,.yaml,.yml,application/json,text/yaml" class="sr"></label>
+    <button id="exportJson" type="button">Save assessment (.json)</button>
+    <button id="exportMd" type="button" class="primary">Download report (.md)</button>
+    <button id="printBtn" type="button">Print or save as PDF</button>
+    <button id="resetBtn" type="button">Start over</button>
+  </div>
+</header>
+
+<section class="card" id="scope-card" aria-labelledby="scope-h">
+  <h2 id="scope-h" style="margin-top:0">About this assessment</h2>
+  <div class="scope">
+    <label class="field">Organization or product<input id="f-name" type="text" autocomplete="off"></label>
+    <label class="field">Who is answering<input id="f-assessor" type="text" autocomplete="off"></label>
+    <label class="field">Date<input id="f-date" type="date"></label>
+    <label class="field">I am assessing
+      <select id="f-mode">
+        <option value="both">Both: we use AI tools and build or configure AI features</option>
+        <option value="organization">Our organization's use of AI tools</option>
+        <option value="product">A software product or integration we build</option>
+      </select>
+    </label>
+  </div>
+  <label class="field" style="margin-top:.75rem">What is in scope (optional)<textarea id="f-description" rows="2"></textarea></label>
+  <label class="small" style="display:flex;gap:.5rem;margin-top:.75rem;align-items:flex-start"><input id="f-strict" type="checkbox" style="margin-top:.3rem"> <span>Strict scoring: count controls I have not answered as "None" (recommended before you share the result)</span></label>
+</section>
+
+<div class="summary" aria-live="polite" id="summary"></div>
+<nav class="tabs noprint" role="tablist" aria-label="Sections">
+  <button role="tab" id="tab-assess" aria-selected="true" aria-controls="assess" type="button">1. Assess</button>
+  <button role="tab" id="tab-results" aria-selected="false" aria-controls="results" type="button">2. Results</button>
+  <button role="tab" id="tab-plan" aria-selected="false" aria-controls="plan" type="button">3. Action plan</button>
+</nav>
+
+<main>
+  <section id="assess" role="tabpanel" aria-labelledby="tab-assess"></section>
+  <section id="results" role="tabpanel" aria-labelledby="tab-results" hidden></section>
+  <section id="plan" role="tabpanel" aria-labelledby="tab-plan" hidden></section>
+</main>
+
+<footer>
+  <p>safeAI is free and open source (Apache-2.0). This tool produces a planning aid from self-reported answers. It is not an audit, a certification, or legal advice.</p>
+  <p class="small">Framework version <span id="fwv"></span></p>
+</footer>
+</div>
+
+<script>/*
+ * safeAI scoring, used by the browser tool (web/index.html) and tested against the
+ * Python implementation (src/safeai/scoring.py). If you change a rule here, change it
+ * there and in docs/scoring.md. `tests/test_web_parity.py` will fail if they drift.
+ */
+(function (root) {
+  'use strict';
+
+  var RANK = { none: 0, guided: 1, procedural: 2, structural: 3 };
+  var RANK_NAME = ['none', 'guided', 'procedural', 'structural'];
+  var WEIGHT = { critical: 3, high: 2, medium: 1 };
+  var COST = { low: 1, medium: 2, high: 3 };
+  var BANDS = [[90, 'Leading'], [75, 'Strong'], [50, 'Developing'], [25, 'Basic'], [0, 'Exposed']];
+  var ANSWERS = ['none', 'guided', 'procedural', 'structural', 'na'];
+  var VERB_CLAUSES = {
+    SEE: 'It sees only what your people are already allowed to see, minus what you wall off.',
+    DO: 'It does only what you grant, and it stops for a named person where it matters.',
+    SAY: 'It says nothing that contradicts what you stand for, and never poses as a person.',
+    ANSWER: 'You answer for it with a full record of every decision, and you can stop it.'
+  };
+  var STATUS_TEXT = {
+    supported: 'Supported by your answers',
+    partly: 'Partly supported',
+    not_yet: 'Not yet supported',
+    unassessed: 'Not assessed'
+  };
+  var ANSWER_LABEL = {
+    structural: 'Structural', procedural: 'Procedural', guided: 'Guided',
+    none: 'None', na: 'N/A', '': 'Not assessed'
+  };
+  var DISCLAIMER =
+    'This report is generated from self-reported answers. It is a planning aid, not an audit, ' +
+    'certification, or legal advice. Scores are indicative and depend entirely on the honesty ' +
+    'and accuracy of the answers.';
+
+  function pct(x) { return Math.floor(x * 1000 + 0.5) / 10; }
+  function r4(x) { return Math.floor(x * 10000 + 0.5) / 10000; }
+
+  function bandFor(score) {
+    if (score === null) return null;
+    for (var i = 0; i < BANDS.length; i++) if (score >= BANDS[i][0]) return BANDS[i][1];
+    return BANDS[BANDS.length - 1][1];
+  }
+
+  function applies(control, mode) {
+    return mode === 'both' || control.audience.indexOf(mode) !== -1;
+  }
+
+  function emptyEntry() { return { answer: '', note: '', evidence: '' }; }
+
+  function weighted(rows) {
+    var total = 0, sum = 0;
+    rows.forEach(function (r) { total += r.weight; sum += r.weight * r.score; });
+    return total ? sum / total : null;
+  }
+
+  function counts(rows) {
+    var c = { structural: 0, procedural: 0, guided: 0, none: 0, unanswered: 0, na: 0 };
+    rows.forEach(function (r) {
+      if (r.status === 'scored') c[RANK_NAME[r.level]] += 1;
+      else if (r.status === 'na') c.na += 1;
+      else c.unanswered += 1;
+    });
+    return c;
+  }
+
+  function compute(framework, assessment, strict) {
+    var scope = assessment.scope || {};
+    var mode = scope.mode || 'both';
+    var answers = assessment.answers || {};
+    var rows = [];
+
+    framework.controls.forEach(function (control) {
+      if (!applies(control, mode)) return;
+      var entry = answers[control.id] || emptyEntry();
+      var ans = entry.answer || '';
+      var target = RANK[control.max_guarantee];
+      var row = {
+        id: control.id, layer: control.layer, title: control.title,
+        severity: control.severity, effort: control.effort, quick_win: !!control.quick_win,
+        max_guarantee: control.max_guarantee, target: target, answer: ans,
+        note: entry.note || '', evidence: entry.evidence || '',
+        weight: WEIGHT[control.severity], level: null, score: null,
+        status: 'unanswered', capped: false, unevidenced: false
+      };
+      if (ans === 'na') {
+        row.status = 'na';
+      } else {
+        if (ans === '' && strict) { ans = 'none'; row.answer = 'none'; }
+        if (Object.prototype.hasOwnProperty.call(RANK, ans)) {
+          var level = RANK[ans];
+          if (level > target) { level = target; row.capped = true; }
+          row.level = level;
+          row.score = level / target;
+          row.status = 'scored';
+          if (level >= 2 && !row.note.trim() && !row.evidence.trim()) row.unevidenced = true;
+        }
+      }
+      rows.push(row);
+    });
+
+    var layers = framework.layers.map(function (layer) {
+      var lrows = rows.filter(function (r) { return r.layer === layer.id; });
+      var scored = lrows.filter(function (r) { return r.status === 'scored'; });
+      var s = weighted(scored);
+      return {
+        id: layer.id, number: layer.number, name: layer.name, verb: layer.verb,
+        tagline: layer.tagline, score: s === null ? null : pct(s),
+        total: lrows.filter(function (r) { return r.status !== 'na'; }).length,
+        answered: scored.length, counts: counts(lrows)
+      };
+    });
+
+    var verbOf = {};
+    framework.layers.forEach(function (l) { verbOf[l.id] = l.verb; });
+    var verbs = Object.keys(framework.verbs).map(function (verb) {
+      var vrows = rows.filter(function (r) { return verbOf[r.layer] === verb; });
+      var scored = vrows.filter(function (r) { return r.status === 'scored'; });
+      var s = weighted(scored);
+      var status;
+      if (s === null) status = 'unassessed';
+      else {
+        var weakCritical = scored.some(function (r) { return r.severity === 'critical' && r.score < 0.5; });
+        if (s >= 0.8 && !weakCritical) status = 'supported';
+        else if (s >= 0.4) status = 'partly';
+        else status = 'not_yet';
+      }
+      return {
+        verb: verb, label: framework.verbs[verb].label,
+        score: s === null ? null : pct(s), status: status, clause: VERB_CLAUSES[verb]
+      };
+    });
+
+    var scoredAll = rows.filter(function (r) { return r.status === 'scored'; });
+    var os = weighted(scoredAll);
+    var overall = { score: os === null ? null : pct(os) };
+    overall.band = bandFor(overall.score);
+
+    var applicable = rows.filter(function (r) { return r.status !== 'na'; });
+    var coverage = {
+      applicable: applicable.length,
+      answered: applicable.filter(function (r) { return r.status === 'scored'; }).length,
+      not_applicable: rows.filter(function (r) { return r.status === 'na'; }).length,
+      total_in_mode: rows.length
+    };
+    coverage.percent = coverage.applicable ? pct(coverage.answered / coverage.applicable) : null;
+
+    return {
+      framework_version: framework.version, scope: scope, strict: !!strict,
+      coverage: coverage, overall: overall, layers: layers, verbs: verbs, controls: rows,
+      unevidenced: rows.filter(function (r) { return r.unevidenced; }).map(function (r) { return r.id; }),
+      capped: rows.filter(function (r) { return r.capped; }).map(function (r) { return r.id; })
+    };
+  }
+
+  function makePlan(result) {
+    var items = [];
+    result.controls.forEach(function (r) {
+      if (r.status === 'na') return;
+      if (r.status === 'scored' && r.score >= 1) return;
+      var unanswered = r.status === 'unanswered';
+      var score = unanswered ? 0 : r.score;
+      var priority = r.weight * (1 - score) / COST[r.effort];
+      items.push({
+        id: r.id, title: r.title, severity: r.severity, effort: r.effort, quick_win: r.quick_win,
+        current: unanswered ? 'unanswered' : RANK_NAME[r.level],
+        target: RANK_NAME[r.target],
+        next: unanswered ? null : RANK_NAME[Math.min(r.level + 1, r.target)],
+        priority: r4(priority), assess_first: unanswered
+      });
+    });
+    items.sort(function (a, b) {
+      if (b.priority !== a.priority) return b.priority - a.priority;
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
+    var critical = items.filter(function (i) { return i.severity === 'critical'; });
+    critical.sort(function (a, b) {
+      var fa = (a.current === 'none' || a.current === 'unanswered') ? 1 : 0;
+      var fb = (b.current === 'none' || b.current === 'unanswered') ? 1 : 0;
+      if (fa !== fb) return fb - fa;
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
+    return {
+      critical: critical,
+      horizons: {
+        quick: items.filter(function (i) { return i.effort === 'low'; }),
+        next: items.filter(function (i) { return i.effort === 'medium'; }),
+        later: items.filter(function (i) { return i.effort === 'high'; })
+      },
+      count: items.length
+    };
+  }
+
+  /* -------- assessment files: JSON, or the YAML template written by `safeai init` ------- */
+
+  function parseScalar(raw) {
+    var s = raw.trim();
+    if (s === '') return '';
+    if (s.charAt(0) === '"') {
+      var i = 1;
+      while (i < s.length) {
+        if (s.charAt(i) === '\\') { i += 2; continue; }
+        if (s.charAt(i) === '"') break;
+        i++;
+      }
+      return JSON.parse(s.slice(0, i + 1));
+    }
+    var hash = s.indexOf(' #');
+    if (hash !== -1) s = s.slice(0, hash);
+    return s.trim();
+  }
+
+  /* A deliberately tiny reader for the assessment layout only. It is not a general YAML parser. */
+  function parseSimpleYaml(text) {
+    var out = { scope: {}, answers: {} };
+    var section = null, current = null;
+    text.split(/\r?\n/).forEach(function (line) {
+      if (/^\s*#/.test(line) || !line.trim()) return;
+      var m;
+      if ((m = /^(scope|answers):\s*$/.exec(line))) { section = m[1]; current = null; return; }
+      if (/^\S/.test(line)) { section = null; return; }
+      if (section === 'scope' && (m = /^\s{2}(\w+):\s*(.*)$/.exec(line))) {
+        out.scope[m[1]] = parseScalar(m[2]);
+      } else if (section === 'answers') {
+        if ((m = /^\s{2}(L\d+\.\d+):\s*(.*)$/.exec(line))) {
+          current = m[1];
+          var rest = m[2].trim();
+          out.answers[current] = { answer: '', note: '', evidence: '' };
+          if (rest && rest.charAt(0) !== '#') out.answers[current].answer = parseScalar(rest).toLowerCase();
+        } else if (current && (m = /^\s{4}(answer|note|evidence):\s*(.*)$/.exec(line))) {
+          var v = parseScalar(m[2]);
+          out.answers[current][m[1]] = m[1] === 'answer' ? String(v).toLowerCase() : v;
+        }
+      }
+    });
+    return out;
+  }
+
+  function parseAssessmentFile(text) {
+    var raw;
+    try { raw = JSON.parse(text); } catch (e) { raw = parseSimpleYaml(text); }
+    return normalize(raw);
+  }
+
+  function normalize(raw) {
+    var scope = Object.assign({ mode: 'both' }, raw.scope || {});
+    var answers = {};
+    Object.keys(raw.answers || {}).forEach(function (id) {
+      var v = raw.answers[id];
+      if (v && typeof v === 'object') {
+        answers[id] = {
+          answer: v.answer ? String(v.answer).trim().toLowerCase() : '',
+          note: v.note ? String(v.note) : '', evidence: v.evidence ? String(v.evidence) : ''
+        };
+      } else {
+        answers[id] = { answer: v ? String(v).trim().toLowerCase() : '', note: '', evidence: '' };
+      }
+    });
+    return { scope: scope, answers: answers };
+  }
+
+  function exportAssessment(framework, assessment) {
+    var answers = {};
+    framework.controls.forEach(function (c) {
+      var e = assessment.answers[c.id];
+      if (e && (e.answer || e.note || e.evidence)) answers[c.id] = e;
+    });
+    return JSON.stringify({
+      safeai_assessment: 1, framework_version: framework.version,
+      scope: assessment.scope, answers: answers
+    }, null, 2) + '\n';
+  }
+
+  /* -------- Markdown report (same structure as the CLI's) -------- */
+
+  function fmt(x) { return x === null ? 'n/a' : x.toFixed(1); }
+
+  function move(i) {
+    if (i.assess_first) return 'not yet assessed. Answer it first (target: ' + i.target + ')';
+    if (i.current === i.next) return 'currently ' + i.current;
+    return 'currently ' + i.current + ', next step ' + i.next + ' (target: ' + i.target + ')';
+  }
+
+  function toMarkdown(result, plan, framework) {
+    var byId = {};
+    framework.controls.forEach(function (c) { byId[c.id] = c; });
+    var L = [];
+    var s = result.scope, o = result.overall, cov = result.coverage;
+    L.push('# safeAI assessment: ' + (s.name || 'Untitled assessment'), '');
+    var meta = [];
+    if (s.assessor) meta.push('Assessor: ' + s.assessor);
+    if (s.date) meta.push('Date: ' + s.date);
+    meta.push('Mode: ' + (s.mode || 'both'));
+    meta.push('Framework version: ' + result.framework_version);
+    L.push(meta.join(' · '), '', '> ' + DISCLAIMER, '', '## Summary', '');
+    L.push(o.score === null ? 'No controls have been answered yet, so there is no score.'
+      : '**Overall: ' + fmt(o.score) + ' / 100 (' + o.band + ')**', '');
+    if (o.score !== null && !result.strict && cov.percent !== null && cov.percent < 50) {
+      L.push('**Provisional:** fewer than half of the applicable controls have been answered.', '');
+    }
+    L.push('Coverage: ' + cov.answered + ' of ' + cov.applicable + ' applicable controls answered' +
+      (cov.percent !== null ? ' (' + fmt(cov.percent) + '%)' : '') +
+      (cov.not_applicable ? '; ' + cov.not_applicable + ' marked not applicable' : '') + '.');
+    if (cov.answered < cov.applicable && !result.strict) {
+      L.push('Unanswered controls are left out of the scores. The real position may be worse than shown.');
+    }
+    L.push('', '## What you can honestly say', '', '*The AI is a guest, not an admin.*', '');
+    L.push('| | Statement | Status from your answers |', '|---|---|---|');
+    result.verbs.forEach(function (v) {
+      L.push('| **' + v.verb + '** | ' + v.clause + ' | ' + STATUS_TEXT[v.status] + ' (' + fmt(v.score) + ') |');
+    });
+    L.push('', 'Only describe a control as *enforced* if you answered `structural` and can show the evidence. ' +
+      'Describe `procedural` as *requiring approval* and `guided` as *recommended*.', '');
+    L.push('## The seven levels', '');
+    L.push('| Level | Score | Structural | Procedural | Guided | None | Not assessed |', '|---|---:|---:|---:|---:|---:|---:|');
+    result.layers.forEach(function (l) {
+      var c = l.counts;
+      L.push('| L' + l.number + ' ' + l.name + ' (' + l.verb + ') | ' + fmt(l.score) + ' | ' + c.structural + ' | ' +
+        c.procedural + ' | ' + c.guided + ' | ' + c.none + ' | ' + c.unanswered + ' |');
+    });
+    L.push('');
+    if (result.unevidenced.length) {
+      L.push('## Claims without evidence', '',
+        'These controls were marked procedural or structural with no note or evidence. Confirm each before you rely on or repeat the claim.', '');
+      result.unevidenced.forEach(function (id) { L.push('- ' + id + ' ' + byId[id].title); });
+      L.push('');
+    }
+    L.push('## Action plan', '');
+    if (!plan.count) {
+      L.push('No gaps found among the controls you answered. Keep your evidence current.', '');
+    } else {
+      var crit = plan.critical.filter(function (i) { return ['none', 'unanswered', 'guided'].indexOf(i.current) !== -1; });
+      if (crit.length) {
+        L.push('### Critical gaps first', '');
+        crit.forEach(function (i) { L.push('- **' + i.id + ' ' + i.title + '**: ' + move(i)); });
+        L.push('');
+      }
+      var names = { quick: 'Quick wins (low effort, weeks)', next: 'Build next (medium effort, a few months)', later: 'Longer term (high effort)' };
+      ['quick', 'next', 'later'].forEach(function (k) {
+        var items = plan.horizons[k];
+        if (!items.length) return;
+        L.push('### ' + names[k], '');
+        items.forEach(function (i) {
+          L.push('**' + i.id + ' ' + i.title + '** · ' + i.severity + ' · ' + move(i));
+          byId[i.id].steps.forEach(function (st) { L.push('- [ ] ' + st); });
+          L.push('');
+        });
+      });
+    }
+    L.push('## All controls', '', '| ID | Control | Severity | Answer | Strongest possible |', '|---|---|---|---|---|');
+    result.controls.forEach(function (r) {
+      L.push('| ' + r.id + ' | ' + r.title + ' | ' + r.severity + ' | ' + ANSWER_LABEL[r.answer] + ' | ' + r.max_guarantee + ' |');
+    });
+    L.push('');
+    return L.join('\n');
+  }
+
+  var api = {
+    RANK: RANK, RANK_NAME: RANK_NAME, ANSWERS: ANSWERS, STATUS_TEXT: STATUS_TEXT,
+    ANSWER_LABEL: ANSWER_LABEL, DISCLAIMER: DISCLAIMER, VERB_CLAUSES: VERB_CLAUSES,
+    applies: applies, compute: compute, makePlan: makePlan, normalize: normalize,
+    parseAssessmentFile: parseAssessmentFile, parseSimpleYaml: parseSimpleYaml,
+    exportAssessment: exportAssessment, toMarkdown: toMarkdown, bandFor: bandFor, move: move, fmt: fmt
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.SafeAI = api;
+})(typeof self !== 'undefined' ? self : this);
+</script>
+<script>
+(function () {
+  'use strict';
+  var FW = {"version": "0.1.0", "guarantee_types": {"structural": {"rank": 3, "label": "Structural", "meaning": "Enforced in code or configuration. It cannot happen, whatever the AI does or is told.", "example": "A phone number is masked by the server before the AI ever receives it.", "fails_by": "Misconfiguration, or rules too narrow to catch what matters."}, "procedural": {"rank": 2, "label": "Procedural", "meaning": "It cannot happen without a named person's approval or a recorded process.", "example": "Write access stays off until an administrator signs a recorded decision to enable it.", "fails_by": "Rubber-stamping, approval fatigue, approvers who lack context."}, "guided": {"rank": 1, "label": "Guided", "meaning": "The AI or its users are told what to do and usually comply. Nothing ensures it.", "example": "Staff are told not to paste personal data into a chatbot.", "fails_by": "Drift, misreading, prompt injection, model updates, forgetfulness."}, "none": {"rank": 0, "label": "None", "meaning": "No control exists yet.", "example": "", "fails_by": ""}}, "verbs": {"SEE": {"label": "What the AI can SEE", "summary": "Data, and who handles it."}, "DO": {"label": "What the AI can DO", "summary": "Actions, authority, and protection of people who could be harmed."}, "SAY": {"label": "What the AI can SAY", "summary": "Words spoken in your name, and the line between machine and person."}, "ANSWER": {"label": "Who ANSWERS for it", "summary": "Responsibility, records, and the ability to stop it."}}, "layers": [{"id": "L1", "number": 1, "verb": "SEE", "name": "Data protection", "tagline": "Your people's data stays protected.", "question": "Can the AI see personal or sensitive information? Could it leak?", "harm": "Exposure of personal, financial, health, case, or contact data; legal and reputational damage."}, {"id": "L2", "number": 2, "verb": "SEE", "name": "Vendor and model trust", "tagline": "Your data is not used to train AI, and you control the account.", "question": "Which AI company and model? Do they keep or train on our data?", "harm": "Constituent data retained or reused outside your control."}, {"id": "L3", "number": 3, "verb": "DO", "name": "Delegation and authority", "tagline": "It does only what you grant, and it stops for a person.", "question": "Can it change records, spend money, or message people on its own?", "harm": "Unauthorized changes, mass messages, and actions triggered by hidden instructions in documents."}, {"id": "L4", "number": 4, "verb": "DO", "name": "Protection of the vulnerable", "tagline": "Children and people in crisis are protected by rules no setting can lower.", "question": "What about children, survivors, clients in crisis, and people who depend on us?", "harm": "Harm to minors or vulnerable people; safeguarding failures; unfair decisions that the affected people cannot see or contest."}, {"id": "L5", "number": 5, "verb": "SAY", "name": "Mission and values fidelity", "tagline": "It is held to what your organization stands for.", "question": "Will it say something that contradicts our mission, commitments, or facts?", "harm": "Misstatements made in your name; erosion of the trust your mission depends on."}, {"id": "L6", "number": 6, "verb": "SAY", "name": "The human boundary", "tagline": "It represents; it never impersonates or replaces a person.", "question": "Will it pretend to be a person, or stand in for someone whose role needs a human?", "harm": "AI presented as a staff member or professional; care and judgment reduced to automation."}, {"id": "L7", "number": 7, "verb": "ANSWER", "name": "Accountability and governance", "tagline": "You set the rules, and you can see and stop every decision.", "question": "Who is responsible? Can we see what it did, and can we stop it?", "harm": "Nobody can explain an action afterwards; the organization cannot show due care."}], "controls": [{"id": "L1.01", "layer": "L1", "title": "Data inventory and classification", "question": "Do you know which data the AI systems in scope can reach, and is that data classified by sensitivity?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["List every system the AI can read from or write to (databases, email, file shares, CRM, case systems).", "Classify the data in each as public, internal, confidential, or restricted.", "Record the classification where the people configuring AI access will see it."], "evidence": ["Data inventory or register", "Classification scheme"]}, {"id": "L1.02", "layer": "L1", "title": "AI inherits the user's own permissions", "question": "Does the AI act with the signed-in person's own access rights, so it can never see more than that person can?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "medium", "quick_win": false, "steps": ["Connect AI tools through each person's own identity (for example OAuth or single sign-on), not a shared super-account.", "Remove any shared service accounts with broad read access.", "Test with a low-privilege user and confirm the AI cannot reach restricted data."], "evidence": ["Integration configuration", "Result of a low-privilege access test"]}, {"id": "L1.03", "layer": "L1", "title": "Restricted data is blocked from AI paths by default", "question": "Are your most sensitive data sets (credentials, payment details, case files) technically unreachable by the AI unless someone deliberately opens them?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "low", "quick_win": true, "steps": ["Maintain a block list of tables, folders, or fields the AI can never query.", "Start the list with payment instruments, credentials, system configuration, and message content.", "Make removing an item from the block list a recorded decision."], "evidence": ["Block list configuration", "Change history for the block list"]}, {"id": "L1.04", "layer": "L1", "title": "Personal data is masked before it reaches the model", "question": "Are sensitive fields (email, phone, birth date, ID numbers, addresses) masked or removed in code before the AI receives them?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "medium", "quick_win": false, "steps": ["Put a masking layer between your data and the AI so masking cannot be bypassed with a clever prompt.", "Define the list of masked fields and review it each quarter.", "Verify with test records that real values never appear in what is sent to the model."], "evidence": ["Masking rules", "Test results showing masked output"]}, {"id": "L1.05", "layer": "L1", "title": "Personal data inside free text is detected", "question": "Do you detect and mask personal data typed into notes, comments, or message fields, not only data in labeled fields?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Test whether a phone number or disclosure typed into a notes field reaches the AI unmasked.", "Add pattern-based detection (and, where warranted, entity recognition) for free-text fields.", "Where detection is imperfect, block free-text fields on the most sensitive records instead."], "evidence": ["Free-text test cases and results"]}, {"id": "L1.06", "layer": "L1", "title": "Staff know what not to paste into AI tools", "question": "Do staff and volunteers have clear, short guidance on what data must never be typed or pasted into an AI tool?", "audience": ["organization"], "max_guarantee": "guided", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Write a one-page do and do-not list with concrete examples from your own work.", "Include it in onboarding and repeat it at least yearly.", "Be honest in your own reporting that this control is guided, not enforced."], "evidence": ["The guidance document", "Training attendance"]}, {"id": "L1.07", "layer": "L1", "title": "Pass-through handling and minimal retention", "question": "Do your AI integrations avoid storing constituent records, and do they keep prompts, outputs, and logs only as long as needed?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Document what each AI integration stores, where, and for how long.", "Set retention limits and automatic deletion for prompts, outputs, and caches.", "Keep personal data out of logs, or mask it there as well."], "evidence": ["Retention settings", "Data flow diagram"]}, {"id": "L1.08", "layer": "L1", "title": "Privacy obligations cover AI use", "question": "Do your privacy notice, consent practices, and (where required) impact assessments cover the use of AI with personal data?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Check which privacy laws and funder or regulator rules apply to you (verify with qualified legal advice).", "Update your privacy notice to describe AI processing in plain language.", "Complete a data protection impact assessment where your jurisdiction requires or recommends one."], "evidence": ["Updated privacy notice", "Impact assessment"]}, {"id": "L2.01", "layer": "L2", "title": "Vendor data terms reviewed", "question": "Have you read and recorded what each AI vendor does with your data: training, retention, human review, deletion?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "critical", "effort": "low", "quick_win": true, "steps": ["For every AI vendor, record whether your data is used for training and for how long it is retained.", "Note which account type the answer depends on. Consumer and business terms often differ.", "Re-check whenever the vendor updates its terms."], "evidence": ["Vendor review record with date and the terms reviewed"]}, {"id": "L2.02", "layer": "L2", "title": "Organization-managed accounts, not personal logins", "question": "Do staff use AI through accounts your organization manages, so you control seats, settings, and offboarding?", "audience": ["organization"], "max_guarantee": "structural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Provide approved AI tools on organization-managed accounts.", "Use single sign-on where available, so removing a person removes their access.", "Where you cannot technically block personal accounts, say plainly that this control is procedural or guided."], "evidence": ["Account administration console", "Offboarding checklist"]}, {"id": "L2.03", "layer": "L2", "title": "Model and sub-processor inventory", "question": "Can you say which AI model and which companies process your data, and where?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "medium", "effort": "low", "quick_win": true, "steps": ["Publish a one-page statement listing each model, vendor, sub-processor, and processing region.", "Update it when you change model or vendor."], "evidence": ["Model and sub-processor statement"]}, {"id": "L2.04", "layer": "L2", "title": "Contracts and data processing terms", "question": "Are there written agreements covering confidentiality, data processing, breach notification, and deletion on exit?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Confirm a data processing agreement or equivalent exists for each vendor handling personal data.", "Check breach-notification timing and deletion-on-exit commitments.", "Ask a lawyer or your funder's compliance contact to review anything unusual."], "evidence": ["Signed agreements"]}, {"id": "L2.05", "layer": "L2", "title": "Vendor safety rules and values are known", "question": "Do you know which safety rules and published values the underlying model brings, and have you told your leadership?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "medium", "effort": "low", "quick_win": true, "steps": ["Read the vendor's published usage policy and model documentation.", "Tell leadership and, where relevant, constituents that your own rules sit on top of the vendor's, so nobody discovers a second, invisible value layer on their own."], "evidence": ["Summary of vendor policies", "Leadership briefing"]}, {"id": "L2.06", "layer": "L2", "title": "Your own commitment on constituent data", "question": "Have you made, and published, a commitment about what you yourself do with constituent data in AI contexts (no selling, no training, no pooling without consent)?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Decide and write down what you will never do with constituent data, whatever a vendor permits.", "Publish it in plain language where constituents and partners can find it.", "Hold yourself to it through your governance process (see L7)."], "evidence": ["Published data commitment"]}, {"id": "L2.07", "layer": "L2", "title": "Environmental and labor due diligence", "question": "Have you considered, and recorded, what the vendor discloses about energy and water use and the working conditions of the people who label data and moderate content?", "audience": ["organization", "product"], "max_guarantee": "guided", "severity": "medium", "effort": "low", "quick_win": false, "steps": ["Ask each vendor for its published environmental and labor disclosures.", "Record what you found and how it informed your choice."], "evidence": ["Vendor disclosures reviewed"]}, {"id": "L2.08", "layer": "L2", "title": "Re-assessment on vendor or model change", "question": "Do you re-run this assessment, and your behavioral tests, when a vendor changes its terms, or a model is swapped or updated?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "medium", "effort": "low", "quick_win": false, "steps": ["Subscribe to vendor change notices.", "Make a model or terms change a trigger in your change-control process (see L7.14)."], "evidence": ["Change log showing re-assessment"]}, {"id": "L3.01", "layer": "L3", "title": "Allow-list of AI actions, deny by default", "question": "Is every action the AI can take (read, create, update, send, delete) explicitly granted per role, with everything else denied?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "medium", "quick_win": false, "steps": ["List the action classes your AI integrations can perform.", "Grant each explicitly to specific roles. Treat anything unlisted as denied.", "Review grants at least twice a year."], "evidence": ["Grant table", "Configuration showing deny-by-default"]}, {"id": "L3.02", "layer": "L3", "title": "Write and send capabilities are off until a decision is recorded", "question": "Is the ability to change records or send messages switched off by default, and turned on only through a recorded decision?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Start every deployment read-only.", "Require a short written decision, with named approver and impact assessment (see L7.10), before enabling write or send."], "evidence": ["Decision record for each enabled capability"]}, {"id": "L3.03", "layer": "L3", "title": "Draft versus commit", "question": "Can the AI draft or stage a change or message, with a person required to commit or send it, unless a grant says otherwise?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "medium", "quick_win": false, "steps": ["Split each write or send action into a staged step and a commit step.", "Make the commit step a human action in the tool itself, not a convention.", "Show approvers what will change, not only the AI's summary of it."], "evidence": ["Workflow showing a human commit step"]}, {"id": "L3.04", "layer": "L3", "title": "Irreversible actions are never autonomous", "question": "Do deletions, bulk messages, payments, and changes to protected records always need a human commit, whatever the grant?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "medium", "quick_win": false, "steps": ["Define irreversible: anything that cannot be fully undone or that reaches many people.", "Enforce a human commit for those actions in code, regardless of role or grant.", "Hold mass updates above a set threshold for approval."], "evidence": ["Rule configuration", "Tests attempting each irreversible action"]}, {"id": "L3.05", "layer": "L3", "title": "Every grant has a named signer", "question": "For each thing the AI is allowed to do, is there a named person who signed off on that grant?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Record who authorized each grant, when, and under which policy version.", "The signer is a person in a defined role, never the AI and never the vendor."], "evidence": ["Grant records with signer and date"]}, {"id": "L3.06", "layer": "L3", "title": "Escalation is designed, not an error path", "question": "Is there a defined point at which the AI must stop and hand a decision to a person, with a record of what was asked and why it stopped?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "medium", "effort": "medium", "quick_win": false, "steps": ["Define the conditions that require a person: sensitive topics, uncertainty, conflict with a firm rule, high impact.", "When a firm rule conflicts with an instruction, hold and surface the conflict to the requester. Never silently comply or silently refuse.", "Record each handoff: the request, the proposed action, the rule, the risk."], "evidence": ["Escalation rules", "Sample handoff records"]}, {"id": "L3.07", "layer": "L3", "title": "Prompt-injection containment", "question": "Is content from outside (uploads, inbound email, web pages, form submissions) treated as untrusted, with stricter limits on what the AI may do after reading it?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "high", "quick_win": false, "steps": ["Tag any action proposed while the AI was reading external content with a provenance flag.", "Apply stricter rules, or a mandatory human commit, to flagged actions.", "Test with documents that contain hidden instructions (see L7.13)."], "evidence": ["Provenance flag implementation", "Red-team results"]}, {"id": "L3.08", "layer": "L3", "title": "Volume and rate limits", "question": "Are there hard caps on recipients per message, records changed per run, and spend per period?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Set conservative defaults for recipients per send, records per update, and API or spend limits.", "Raising a cap is a recorded decision."], "evidence": ["Configured limits"]}, {"id": "L3.09", "layer": "L3", "title": "Policy travels with delegated work", "question": "When one AI agent or tool hands work to another, do your constraints travel with it?", "audience": ["product"], "max_guarantee": "structural", "severity": "medium", "effort": "high", "quick_win": false, "steps": ["Pass the originating role, grant, and policy version with every sub-agent or tool call.", "Reject calls that arrive without that context."], "evidence": ["Architecture description", "Tests with stripped context"]}, {"id": "L4.01", "layer": "L4", "title": "Protected people and records are defined", "question": "Have you written down who counts as a protected person (minors, vulnerable adults, survivors, clients in crisis) and which records concern them?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "critical", "effort": "low", "quick_win": true, "steps": ["Use your safeguarding policy, funder requirements, and applicable law to define the groups.", "List the systems, tables, folders, and fields that hold their information.", "Have your safeguarding lead review the list."], "evidence": ["Protected persons definition", "Protected records list"]}, {"id": "L4.02", "layer": "L4", "title": "Protected records blocked or masked by default", "question": "Are safeguarding, case, counseling, health, and similar records blocked or masked from AI paths unless a named person has opened them?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "low", "quick_win": true, "steps": ["Add the records from L4.01 to your block or mask list (see L1.03 and L1.04).", "Cover vulnerable adults with the same protections as minors."], "evidence": ["Block list showing protected records"]}, {"id": "L4.03", "layer": "L4", "title": "Images and identifying details of minors stay off AI paths", "question": "Are photos and identifying details of children unreachable by AI, and is AI generation or editing of images of identifiable children prohibited?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "medium", "quick_win": false, "steps": ["Exclude photo and file fields for minors from every AI integration.", "Mask age group, grade, and guardian links by default.", "Check which file and image tools your AI integrations expose, and disable the ones that reach these files."], "evidence": ["File tool configuration", "Test results"]}, {"id": "L4.04", "layer": "L4", "title": "No AI-initiated contact with minors without required adults", "question": "Is it impossible for the AI to send a message to a minor without a parent, guardian, or other required adult included, where your policy requires it?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "medium", "quick_win": false, "steps": ["Add a recipient rule on every send path that checks for minors and required copies.", "Hold, and do not send, any message that fails the rule."], "evidence": ["Recipient rule", "Test messages"]}, {"id": "L4.05", "layer": "L4", "title": "Abuse, self-harm, and crisis content goes to a person", "question": "Is content about abuse, self-harm, or immediate danger never auto-sent, and routed to a named person and your reporting workflow?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "critical", "effort": "medium", "quick_win": false, "steps": ["Identify the people and procedures that handle disclosures, and the reporting duties that apply to you (verify with your safeguarding lead and legal counsel).", "Route detected content to that person. Hold it instead of sending.", "Test the route with seeded examples."], "evidence": ["Escalation procedure", "Test results"]}, {"id": "L4.06", "layer": "L4", "title": "Urgent need is never queued behind review", "question": "Can a request involving urgent human need or danger skip any approval or review queue meant for routine content?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "high", "effort": "low", "quick_win": false, "steps": ["Give urgent-need items a priority path that reaches a person immediately.", "Make it a rule that review of tone, mission, or policy never delays help."], "evidence": ["Priority rule", "Test showing immediate routing"]}, {"id": "L4.07", "layer": "L4", "title": "AI informs; people decide eligibility and priority", "question": "When AI contributes to decisions about aid, services, or care priority, is a named person always the decider, and is their decision recorded?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "critical", "effort": "medium", "quick_win": false, "steps": ["List decisions that affect a person's access to help: eligibility, priority, referral, grants.", "Require a named person to decide each, with the AI's contribution shown as input only.", "Record the decision and the person who made it."], "evidence": ["Decision records"]}, {"id": "L4.08", "layer": "L4", "title": "Fairness checks on AI rankings", "question": "Before AI rankings or recommendations are used (care queues, aid, outreach), do you check that they do not systematically disadvantage a group?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "high", "quick_win": false, "steps": ["Choose the groups relevant to your work and the data you can lawfully use to check them.", "Compare outcomes across groups on a sample before go-live, then periodically.", "Document what you checked and what you changed."], "evidence": ["Fairness check report"]}, {"id": "L4.09", "layer": "L4", "title": "AI scores and classifications of people are visible", "question": "Is any AI-produced score, label, or classification of a person disclosed to staff and explainable to them?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Inventory every place an AI assigns a score, tag, risk level, or category to a person.", "Show it to staff with the factors behind it.", "Retire any that cannot be explained."], "evidence": ["Inventory of AI classifications", "Screenshots of explanations"]}, {"id": "L4.10", "layer": "L4", "title": "No appeals that exploit vulnerability", "question": "Is AI prevented from tailoring fundraising, engagement, or persuasion to exploit grief, crisis, age, or isolation?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["State in policy that AI-assisted appeals may not target vulnerability.", "Add a review step for AI-drafted appeals, including the segments they target."], "evidence": ["Policy text", "Review records"]}, {"id": "L4.11", "layer": "L4", "title": "Protections are on by default and can only be raised", "question": "Do protections for vulnerable people ship enabled, and can an administrator only strengthen them, never weaken them?", "audience": ["product"], "max_guarantee": "structural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Ship the protected-persons rules switched on.", "Make them non-waivable at the customer or chapter level. Allow tightening only.", "Do not shift the burden of control onto the families or administrators who might not find the setting."], "evidence": ["Default configuration", "Admin settings showing no weaken option"]}, {"id": "L5.01", "layer": "L5", "title": "Mission and commitments are written down for AI", "question": "Have you written down your mission, firm commitments, and red lines in a form that an AI can be given and a person can audit?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Write a short values file: what you stand for, what you never do, and what is left to judgment.", "For each commitment, say how firmly it is held (firm, flexible, or open).", "Have your leadership approve it."], "evidence": ["Values file", "Approval record"]}, {"id": "L5.02", "layer": "L5", "title": "Values file is given to the AI as context", "question": "Is that values file loaded as context for the AI systems in scope?", "audience": ["organization", "product"], "max_guarantee": "guided", "severity": "medium", "effort": "low", "quick_win": true, "steps": ["Load the values file into the AI's instructions for each approved use case.", "Be honest that this is guidance. The AI usually follows it, and nothing ensures it."], "evidence": ["Configuration showing the loaded file"]}, {"id": "L5.03", "layer": "L5", "title": "Enforced commitments are separated from guidance", "question": "Can you show which of your commitments are enforced by a gate or a person, and which are guidance only?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Mark each commitment as enforced in code, enforced by a person, or guidance only.", "Compile only firm commitments that a machine can check into rules. Flexible ones become at most a review flag, and open ones are never turned into rules.", "Show the result to leadership and reviewers."], "evidence": ["Enforced-versus-guided table"]}, {"id": "L5.04", "layer": "L5", "title": "Your values are authored by you", "question": "Were your values written and approved by your own governance, rather than supplied as a default by a vendor or developer?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Have your board or leadership adopt the values through your normal process.", "If you build software, set floors only for safeguarding and data protection. Never ship values or doctrine as a default."], "evidence": ["Adoption record"]}, {"id": "L5.05", "layer": "L5", "title": "Claims are sourced and estimates are marked", "question": "Must AI-drafted content that states facts or speaks for your organization cite sources and mark estimates, with unsourced claims flagged for a reviewer?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Require a source for factual claims and for statements about your own positions.", "Mark estimates and uncertainty explicitly in drafts.", "Hold, and do not block, content with unsourced claims, so a reviewer can decide."], "evidence": ["Review checklist", "Examples of flagged drafts"]}, {"id": "L5.06", "layer": "L5", "title": "Open questions are marked as opinion", "question": "When a question is genuinely contested or your organization has no settled position, does the AI say so and mark its answer as opinion?", "audience": ["organization", "product"], "max_guarantee": "guided", "severity": "medium", "effort": "low", "quick_win": true, "steps": ["List the questions where your organization deliberately holds no position.", "Tell the AI to present them as open and to avoid taking sides in your name.", "Do not block content for taking a side. Check only that it is marked as opinion."], "evidence": ["List of open questions", "Sample outputs"]}, {"id": "L5.07", "layer": "L5", "title": "Behavioral regression tests", "question": "Do you run a repeatable set of test questions, seeded from your values and from known drift, whenever a model or prompt changes?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Write 20 to 50 test prompts that probe your red lines and the ways AI tends to drift from your values.", "Record expected and unacceptable answers. Have a person judge the results.", "Re-run on every model, prompt, or values-file change and keep the results."], "evidence": ["Test set", "Dated test results"]}, {"id": "L5.08", "layer": "L5", "title": "Public-facing AI content is reviewed before release", "question": "Is AI-drafted content that goes out in your name (publications, appeals, donor communications, public statements) reviewed by a person before release?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Define which outputs count as public-facing.", "Require a named reviewer's approval before release.", "Track how often reviewers change or reject drafts."], "evidence": ["Review log"]}, {"id": "L5.09", "layer": "L5", "title": "Corrections can come from below", "question": "Is there a channel for staff, chapters, or the community to challenge or propose changes to the AI's rules, rather than only inheriting them?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "medium", "effort": "low", "quick_win": true, "steps": ["Publish how to suggest a change to the AI rules.", "Review proposals on a schedule and record the outcome."], "evidence": ["Proposal channel", "Record of decisions"]}, {"id": "L6.01", "layer": "L6", "title": "No signing as a person without their approval", "question": "Is it impossible for the AI to send something signed as a named staff member, leader, or professional unless that person approved this specific message?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "medium", "quick_win": false, "steps": ["Check sender identity and signature block on every outbound message.", "Hold messages that carry a person's name or signature without that person's approval of the specific message."], "evidence": ["Send rule", "Test messages"]}, {"id": "L6.02", "layer": "L6", "title": "AI is disclosed where it matters", "question": "Do public-facing chatbots identify themselves as AI, and is AI-drafted content labeled wherever your policy or the law requires?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Have every chatbot state at the start that it is an AI.", "Add a configurable disclosure line or metadata to AI-assisted messages.", "Check disclosure rules that apply to you (verify with legal advice)."], "evidence": ["Chatbot opening message", "Message footers"]}, {"id": "L6.03", "layer": "L6", "title": "No simulated care, friendship, or companionship", "question": "Do you avoid member-facing AI that simulates care or companionship, and are care messages sent and followed up by a named person?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["State the rule: the AI drafts, and a person cares.", "Require a human sender for care and support messages.", "Pay special attention to isolated, grieving, and dependent people, who are most at risk of mistaking simulation for relationship."], "evidence": ["Policy", "Care messaging workflow"]}, {"id": "L6.04", "layer": "L6", "title": "Roles that need a human route to one", "question": "Do requests for counseling, clinical, legal, or other professional judgment route to a qualified person rather than being answered by the AI?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "critical", "effort": "medium", "quick_win": false, "steps": ["List roles in your organization that require a qualified human.", "Detect requests for those roles and route them to a named person.", "Tell the user plainly that a person will handle it."], "evidence": ["Role list", "Routing rule", "Test results"]}, {"id": "L6.05", "layer": "L6", "title": "Confidential disclosures are never solicited or recorded by AI", "question": "Is AI prevented from soliciting, recording in records, or sending confidential or privileged disclosures (counseling, legal, medical, or similar)?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Define what counts as confidential or privileged in your work.", "Add content rules on writes and sends that hold and route such content to a person."], "evidence": ["Content rule", "Test results"]}, {"id": "L6.06", "layer": "L6", "title": "Positive scope: what the AI is for", "question": "Have you written down what the AI is for, so that a refusal can come with a helpful alternative?", "audience": ["organization", "product"], "max_guarantee": "guided", "severity": "medium", "effort": "low", "quick_win": true, "steps": ["For each boundary, write what the AI can still legitimately help with.", "Include these in the AI's instructions."], "evidence": ["Scope statement"]}, {"id": "L6.07", "layer": "L6", "title": "Guarding against over-reliance", "question": "Do you monitor whether staff accept AI output without scrutiny, and take steps to keep human judgment strong?", "audience": ["organization"], "max_guarantee": "procedural", "severity": "medium", "effort": "medium", "quick_win": false, "steps": ["Track how often reviewers edit or reject AI drafts. A rate near zero is a warning sign.", "Rotate reviewers and sample approved items for second review."], "evidence": ["Edit and reject metrics", "Sampling records"]}, {"id": "L6.08", "layer": "L6", "title": "A human is always reachable", "question": "Can anyone using a public-facing AI reach a person easily?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Put a visible way to reach a person in every AI interface.", "Staff the channel, and measure response time."], "evidence": ["Interface screenshots", "Response time metrics"]}, {"id": "L7.01", "layer": "L7", "title": "Named owner for AI", "question": "Is there a named executive owner for AI use, and a group or role that reviews it?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "critical", "effort": "low", "quick_win": true, "steps": ["Name one accountable executive.", "Set up a small review group (operations, programs, safeguarding, technology, and a board liaison).", "Report to the board or equivalent at least twice a year."], "evidence": ["Role description", "Meeting minutes"]}, {"id": "L7.02", "layer": "L7", "title": "Approved AI use policy", "question": "Do you have a short AI use policy that leadership approved and staff received?", "audience": ["organization"], "max_guarantee": "guided", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Write a policy covering approved tools, forbidden uses, data rules, and where to ask questions.", "Have leadership approve it, publish it, and cover it in onboarding."], "evidence": ["Policy", "Acknowledgement records"]}, {"id": "L7.03", "layer": "L7", "title": "Register of AI systems and use cases", "question": "Do you keep a current list of AI systems and use cases, each with a risk rating?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["List every AI tool and use case, including features built into software you already use.", "Rate each by what it touches (see L1.01) and what it can do (see L3).", "Review the list at least every six months."], "evidence": ["AI register"]}, {"id": "L7.04", "layer": "L7", "title": "Responsibility map", "question": "For each deployment, is it written down what the vendor, the software provider, and your organization each answer for?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["For each AI deployment, write who is responsible for the model, the integration, the data, the configuration, and the decisions.", "Share it with leadership and, where relevant, with the people affected."], "evidence": ["Responsibility map"]}, {"id": "L7.05", "layer": "L7", "title": "Audit log of AI activity", "question": "Does a log record who used which AI tool, with what inputs and actions, and what the outcome was?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "medium", "quick_win": false, "steps": ["Log user, time, tool, parameters, and outcome for every AI action.", "Protect the log from alteration, and limit who can read it.", "Keep personal data out of the log where possible."], "evidence": ["Sample log entries", "Log retention settings"]}, {"id": "L7.06", "layer": "L7", "title": "Log records authority, not only activity", "question": "Do your logs show who granted the permission, under which policy version, whether a person overrode a decision, and whether the AI escalated or delegated?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Add grant, signer, policy version, override, and escalation-or-delegation fields to the log schema.", "Test that a reviewer can reconstruct why an action was allowed."], "evidence": ["Log schema", "Reconstruction test"]}, {"id": "L7.07", "layer": "L7", "title": "Kill switch", "question": "Can an administrator switch AI access off immediately, for one user, one tool, or everything?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "critical", "effort": "low", "quick_win": true, "steps": ["Identify the single place where AI access can be cut off.", "Name two people who can use it, and write down how.", "Practice it once."], "evidence": ["Runbook", "Test record"]}, {"id": "L7.08", "layer": "L7", "title": "AI incident response", "question": "Do you have a plan for AI incidents (data exposure, harmful message, wrong action), including who is told and how you learn from it?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Add AI scenarios to your existing incident plan.", "Define who decides, who is notified (including regulators, funders, and affected people where required), and how lessons are recorded.", "Run a tabletop exercise once a year."], "evidence": ["Incident plan", "Exercise notes"]}, {"id": "L7.09", "layer": "L7", "title": "Recourse for affected people", "question": "Can a person affected by an AI-informed decision ask for review by a human, and can staff reconstruct how the decision was reached?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "medium", "quick_win": false, "steps": ["Tell affected people how to ask for a human review.", "Make sure the log (see L7.05, L7.06) lets staff reconstruct the decision.", "Record the outcome of each review."], "evidence": ["Published recourse process", "Sample review record"]}, {"id": "L7.10", "layer": "L7", "title": "Impact assessment before higher-risk use", "question": "Before enabling write, send, or decision-support uses, do you complete a short assessment of impact on people, especially the most vulnerable?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Use a one-page checklist: who is affected, what could go wrong, what safeguards exist, who signs.", "Include the voice of the people affected, or those who represent them.", "Attach it to the grant record (see L3.05)."], "evidence": ["Completed assessments"]}, {"id": "L7.11", "layer": "L7", "title": "Staff AI literacy", "question": "Have staff and volunteers who use AI been taught what it can and cannot do, and how to spot errors?", "audience": ["organization"], "max_guarantee": "guided", "severity": "medium", "effort": "low", "quick_win": true, "steps": ["Run a short session (one hour) on hallucination, bias, privacy, and the limits of the AI.", "Repeat for new staff, and refresh when tools change."], "evidence": ["Training materials", "Attendance"]}, {"id": "L7.12", "layer": "L7", "title": "Claims discipline", "question": "Do you check that nothing you tell supporters, funders, or constituents about AI safety describes a guided control as if it were enforced?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "low", "quick_win": true, "steps": ["Before publishing a safety claim, find the control behind it and check its guarantee type.", "Say enforced only for structural controls. Say recommended or guided for the rest.", "Do not describe roadmap items in the present tense."], "evidence": ["Claims review record"]}, {"id": "L7.13", "layer": "L7", "title": "Red-team testing", "question": "Do you test your safeguards with deliberate attempts to break them, including instructions hidden in documents?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "high", "effort": "high", "quick_win": false, "steps": ["Seed known violations (a message to a minor, a hidden instruction in an upload, an attempt to read a blocked record).", "Confirm each is caught. Keep the results as a regression suite.", "Re-run on every material change."], "evidence": ["Red-team test set", "Results"]}, {"id": "L7.14", "layer": "L7", "title": "Change control and review rhythm", "question": "Are your AI policies versioned, and are they reviewed on a regular schedule and whenever something material changes?", "audience": ["organization", "product"], "max_guarantee": "procedural", "severity": "medium", "effort": "low", "quick_win": true, "steps": ["Give every policy and rule set a version number and date.", "Review at least annually, and on any material change of model, vendor, or use.", "Changes to firm commitments trigger re-testing and sign-off."], "evidence": ["Version history", "Review minutes"]}, {"id": "L7.15", "layer": "L7", "title": "Policy inheritance across chapters or affiliates", "question": "If you have chapters, affiliates, or customers, can a parent set rules that the others inherit and can tighten but not weaken?", "audience": ["organization", "product"], "max_guarantee": "structural", "severity": "medium", "effort": "high", "quick_win": false, "steps": ["Define which rules are set centrally and which are local.", "Let local units tighten central rules, never loosen them.", "Let local units propose changes to the center (see L5.09)."], "evidence": ["Policy hierarchy", "Configuration"]}]};
+  var S = window.SafeAI;
+  var KEY = 'safeai.assessment.v1';
+  var GLABEL = { none: 'None', guided: 'Guided', procedural: 'Procedural', structural: 'Structural', na: 'N/A' };
+  var state = freshState();
+  var layersById = {};
+  FW.layers.forEach(function (l) { layersById[l.id] = l; });
+  var $ = function (id) { return document.getElementById(id); };
+
+  function freshState() {
+    return {
+      scope: { name: '', assessor: '', date: new Date().toISOString().slice(0, 10), mode: 'both', description: '' },
+      answers: {}, strict: false, done: {}, tab: 'assess'
+    };
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ } }
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      var s = JSON.parse(raw);
+      if (s && s.scope && s.answers) { state = Object.assign(freshState(), s); }
+    } catch (e) { /* ignore */ }
+  }
+  function entry(id) {
+    if (!state.answers[id]) state.answers[id] = { answer: '', note: '', evidence: '' };
+    return state.answers[id];
+  }
+  function assessment() { return { scope: state.scope, answers: state.answers }; }
+  function scored() {
+    var r = S.compute(FW, assessment(), state.strict);
+    return { r: r, p: S.makePlan(r) };
+  }
+
+  /* ---------- legend + assess view ---------- */
+  function legendHtml() {
+    var order = ['structural', 'procedural', 'guided', 'none'];
+    return '<div class="legend" aria-label="Kinds of guarantee">' + order.map(function (k) {
+      var g = FW.guarantee_types[k];
+      return '<div class="g-' + k + '"><b>' + esc(g.label) + '</b>' + esc(g.meaning) + '</div>';
+    }).join('') + '</div>';
+  }
+
+  function controlHtml(c) {
+    var e = entry(c.id);
+    var max = S.RANK[c.max_guarantee];
+    var opts = ['none', 'guided', 'procedural', 'structural', 'na'].map(function (k) {
+      var disabled = k !== 'na' && S.RANK[k] > max;
+      var checked = e.answer === k;
+      return '<label class="opt o-' + k + '"><input type="radio" name="a-' + c.id + '" value="' + k + '" data-id="' + c.id + '"' +
+        (checked ? ' checked' : '') + (disabled ? ' disabled' : '') + '><span' +
+        (disabled ? ' title="This control cannot be enforced more strongly than ' + c.max_guarantee + '"' : '') + '>' + GLABEL[k] + '</span></label>';
+    }).join('');
+    return '<article class="card control" id="c-' + c.id + '">' +
+      '<div class="head"><h3><span class="cid">' + c.id + '</span>' + esc(c.title) + '</h3>' +
+      '<span><span class="sev ' + c.severity + '">' + c.severity + '</span></span></div>' +
+      '<p>' + esc(c.question) + '</p>' +
+      '<fieldset><legend>Answer for ' + esc(c.title) + '</legend>' + opts +
+      '<button type="button" class="clear" data-clear="' + c.id + '">Clear</button></fieldset>' +
+      '<p class="small muted">Strongest possible for this control: <b>' + c.max_guarantee + '</b></p>' +
+      '<details><summary>Note and evidence</summary>' +
+      '<label class="field">Note<textarea rows="2" data-note="' + c.id + '">' + esc(e.note) + '</textarea></label>' +
+      '<label class="field">Evidence (something a reviewer could look at)<input type="text" data-evidence="' + c.id + '" value="' + esc(e.evidence) + '"></label>' +
+      '<p class="small muted">Examples: ' + esc(c.evidence.join('; ')) + '</p></details>' +
+      '<details><summary>How to close this gap</summary><ul class="steps">' +
+      c.steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' +
+      '<p class="small muted">Effort: ' + c.effort + (c.quick_win ? ' · quick win' : '') + '</p></details></article>';
+  }
+
+  function renderAssess() {
+    var mode = state.scope.mode;
+    var h = legendHtml();
+    h += '<p class="small muted">For each control, choose the strongest statement that is <em>true today</em>. Guided is a good, honest answer: it shows you where to improve.</p>';
+    FW.layers.forEach(function (l) {
+      var cs = FW.controls.filter(function (c) { return c.layer === l.id && S.applies(c, mode); });
+      if (!cs.length) return;
+      h += '<section class="level" id="lvl-' + l.id + '"><header><div><h2 style="margin:0">Level ' + l.number + ': ' + esc(l.name) +
+        '</h2><p style="margin:.1rem 0" class="muted">' + esc(l.tagline) + '</p></div><span class="chip">' + l.verb + '</span></header>' +
+        '<p class="small muted">The question: ' + esc(l.question) + ' <br>Harm if we get it wrong: ' + esc(l.harm) + '</p>' +
+        cs.map(controlHtml).join('') + '</section>';
+    });
+    $('assess').innerHTML = h;
+  }
+
+  /* ---------- summary ---------- */
+  function renderSummary() {
+    var x = scored().r, o = x.overall, cov = x.coverage;
+    var pctWidth = o.score === null ? 0 : o.score;
+    var prov = !state.strict && cov.percent !== null && cov.percent < 50;
+    $('summary').innerHTML = '<div class="wrap" style="padding:0"><div class="row">' +
+      '<div><div class="score">' + (o.score === null ? 'n/a' : S.fmt(o.score)) + '<span class="muted small"> / 100</span></div>' +
+      '<div class="band small">' + (o.band ? (prov ? 'Provisional: fewer than half answered' : o.band + ' · indicative') : 'No answers yet') + '</div></div>' +
+      '<div class="meter" role="img" aria-label="Overall score"><span style="width:' + pctWidth + '%"></span></div>' +
+      '<div class="small muted">' + cov.answered + ' of ' + cov.applicable + ' answered' + (state.strict ? '' : ' (unanswered left out of score)') + '</div>' +
+      '</div></div>';
+  }
+
+  /* ---------- results ---------- */
+  function stackHtml(c) {
+    var total = c.structural + c.procedural + c.guided + c.none + c.unanswered;
+    if (!total) return '';
+    function w(n) { return (n / total * 100).toFixed(1) + '%'; }
+    return '<div class="stack" role="img" aria-label="' + c.structural + ' structural, ' + c.procedural + ' procedural, ' + c.guided + ' guided, ' + c.none + ' none">' +
+      '<i class="s" style="width:' + w(c.structural) + '"></i><i class="p" style="width:' + w(c.procedural) + '"></i>' +
+      '<i class="g" style="width:' + w(c.guided) + '"></i><i class="n" style="width:' + w(c.none) + '"></i></div>';
+  }
+
+  function renderResults() {
+    var x = scored().r, h = '';
+    h += '<h2>Results' + (state.scope.name ? ': ' + esc(state.scope.name) : '') + '</h2>';
+    h += '<p class="small muted">' + esc(S.DISCLAIMER) + '</p>';
+    if (x.coverage.answered < x.coverage.applicable && !x.strict) {
+      h += '<div class="warn"><b>' + (x.coverage.applicable - x.coverage.answered) + ' controls are not answered.</b> They are left out of these scores, so the real position may be worse than shown. Turn on strict scoring to count them as "None".</div>';
+    }
+    h += '<h2>What you can honestly say</h2><p><i>The AI is a guest, not an admin.</i></p><div class="card"><table><thead><tr><th></th><th>Statement</th><th>From your answers</th></tr></thead><tbody>' +
+      x.verbs.map(function (v) {
+        return '<tr><td><b>' + v.verb + '</b></td><td>' + esc(v.clause) + '</td><td>' + esc(S.STATUS_TEXT[v.status]) + ' (' + S.fmt(v.score) + ')</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    h += '<div class="say-not" style="margin-top:.75rem"><div class="card"><b>Say</b><ul><li>"Enforced in code" only for controls you answered Structural, with evidence.</li><li>"Requires approval" for Procedural controls.</li><li>"Recommended" for Guided controls.</li><li>"Here is what is in place and what is coming", with dates only once committed.</li></ul></div>' +
+      '<div class="card"><b>Do not say</b><ul><li>"100% safe", "provably ethical", or "AI you never have to check".</li><li>"Enforced" for anything that depends on the AI following instructions.</li><li>Roadmap items in the present tense.</li><li>"Your data is never used for training" without naming the account type it depends on.</li></ul></div></div>';
+
+    h += '<h2>The seven levels</h2><div class="card" style="overflow-x:auto"><table><thead><tr><th>Level</th><th class="num">Score</th><th>Mix of guarantees</th><th class="num">Not answered</th></tr></thead><tbody>' +
+      x.layers.map(function (l) {
+        return '<tr><td>L' + l.number + ' ' + esc(l.name) + ' <span class="chip">' + l.verb + '</span></td><td class="num">' + S.fmt(l.score) + '</td><td>' + stackHtml(l.counts) + '</td><td class="num">' + l.counts.unanswered + '</td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<p class="small muted" style="margin-top:.6rem">Bar colors: teal structural, blue procedural, amber guided, red none.</p></div>';
+
+    if (x.unevidenced.length) {
+      var byId = {}; FW.controls.forEach(function (c) { byId[c.id] = c; });
+      h += '<h2>Claims without evidence</h2><div class="warn">These were marked Procedural or Structural with no note or evidence. Confirm each before you rely on or repeat the claim.<ul>' +
+        x.unevidenced.map(function (id) { return '<li>' + id + ' ' + esc(byId[id].title) + '</li>'; }).join('') + '</ul></div>';
+    }
+    $('results').innerHTML = h;
+  }
+
+  /* ---------- plan ---------- */
+  function planItemHtml(i, byId) {
+    var c = byId[i.id], done = !!state.done[i.id];
+    return '<article class="card plan-item' + (done ? ' done' : '') + '"><label><input type="checkbox" data-done="' + i.id + '"' + (done ? ' checked' : '') + '><div>' +
+      '<h3><span class="cid">' + i.id + '</span>' + esc(i.title) + ' <span class="sev ' + i.severity + '">' + i.severity + '</span></h3>' +
+      '<p class="small muted">' + esc(S.move(i)) + '</p>' +
+      '<ul class="steps">' + c.steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul></div></label></article>';
+  }
+
+  function renderPlan() {
+    var sp = scored(), p = sp.p, byId = {};
+    FW.controls.forEach(function (c) { byId[c.id] = c; });
+    var h = '<h2>Action plan</h2><p class="small muted">Tick items off as you finish them, then update the control\'s answer on the Assess tab and compare your score.</p>';
+    if (!p.count) { $('plan').innerHTML = h + '<p>No gaps found among the controls you answered. Keep your evidence current.</p>'; return; }
+    var crit = p.critical.filter(function (i) { return ['none', 'unanswered', 'guided'].indexOf(i.current) !== -1; });
+    if (crit.length) {
+      h += '<h2>Critical gaps first</h2><div class="card"><ul class="steps">' + crit.map(function (i) {
+        return '<li><b>' + i.id + ' ' + esc(i.title) + '</b>: ' + esc(S.move(i)) + '</li>'; }).join('') + '</ul></div>';
+    }
+    var names = { quick: 'Quick wins (low effort, weeks)', next: 'Build next (medium effort, a few months)', later: 'Longer term (high effort)' };
+    ['quick', 'next', 'later'].forEach(function (k) {
+      if (!p.horizons[k].length) return;
+      h += '<h2>' + names[k] + '</h2>' + p.horizons[k].map(function (i) { return planItemHtml(i, byId); }).join('');
+    });
+    $('plan').innerHTML = h;
+  }
+
+  function renderAll() { renderSummary(); renderResults(); renderPlan(); }
+
+  /* ---------- tabs ---------- */
+  function showTab(t) {
+    state.tab = t;
+    ['assess', 'results', 'plan'].forEach(function (id) {
+      $(id).hidden = id !== t;
+      $('tab-' + id).setAttribute('aria-selected', id === t ? 'true' : 'false');
+    });
+    if (t === 'results') renderResults();
+    if (t === 'plan') renderPlan();
+    save();
+  }
+
+  /* ---------- events ---------- */
+  function bind() {
+    var assess = $('assess');
+    assess.addEventListener('change', function (ev) {
+      var t = ev.target;
+      if (t.matches('input[type=radio][data-id]')) { entry(t.dataset.id).answer = t.value; save(); renderSummary(); }
+    });
+    assess.addEventListener('input', function (ev) {
+      var t = ev.target;
+      if (t.dataset.note) { entry(t.dataset.note).note = t.value; save(); }
+      if (t.dataset.evidence) { entry(t.dataset.evidence).evidence = t.value; save(); }
+    });
+    assess.addEventListener('click', function (ev) {
+      var id = ev.target.dataset && ev.target.dataset.clear;
+      if (!id) return;
+      entry(id).answer = '';
+      var radios = assess.querySelectorAll('input[name="a-' + id + '"]');
+      Array.prototype.forEach.call(radios, function (r) { r.checked = false; });
+      save(); renderSummary();
+    });
+    $('plan').addEventListener('change', function (ev) {
+      var id = ev.target.dataset && ev.target.dataset.done;
+      if (!id) return;
+      if (ev.target.checked) state.done[id] = true; else delete state.done[id];
+      ev.target.closest('.plan-item').classList.toggle('done', ev.target.checked);
+      save();
+    });
+    ['name', 'assessor', 'date', 'description'].forEach(function (k) {
+      $('f-' + k).addEventListener('input', function (ev) { state.scope[k] = ev.target.value; save(); });
+    });
+    $('f-mode').addEventListener('change', function (ev) { state.scope.mode = ev.target.value; save(); renderAssess(); renderAll(); });
+    $('f-strict').addEventListener('change', function (ev) { state.strict = ev.target.checked; save(); renderAll(); });
+    ['assess', 'results', 'plan'].forEach(function (id) {
+      $('tab-' + id).addEventListener('click', function () { showTab(id); });
+    });
+    $('exportJson').addEventListener('click', function () {
+      download('safeai-assessment.json', S.exportAssessment(FW, assessment()), 'application/json');
+    });
+    $('exportMd').addEventListener('click', function () {
+      var sp = scored();
+      download('safeai-report.md', S.toMarkdown(sp.r, sp.p, FW), 'text/markdown');
+    });
+    $('printBtn').addEventListener('click', function () { renderResults(); renderPlan(); window.print(); });
+    $('resetBtn').addEventListener('click', function () {
+      if (!window.confirm('Clear all answers and start over? Export your assessment first if you want to keep it.')) return;
+      state = freshState(); save(); syncFields(); renderAssess(); renderAll(); showTab('assess');
+    });
+    $('importFile').addEventListener('change', function (ev) {
+      var f = ev.target.files && ev.target.files[0];
+      if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () {
+        try {
+          var a = S.parseAssessmentFile(String(rd.result));
+          state.scope = Object.assign(freshState().scope, a.scope);
+          state.answers = a.answers;
+          save(); syncFields(); renderAssess(); renderAll(); showTab('assess');
+        } catch (e) { window.alert('Could not read that file. Use a .json file saved from this tool, or a .yaml file created by `safeai init`.'); }
+      };
+      rd.readAsText(f);
+      ev.target.value = '';
+    });
+  }
+
+  function download(name, text, type) {
+    var blob = new Blob([text], { type: type + ';charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
+  function syncFields() {
+    ['name', 'assessor', 'date', 'description'].forEach(function (k) { $('f-' + k).value = state.scope[k] || ''; });
+    $('f-mode').value = state.scope.mode || 'both';
+    $('f-strict').checked = !!state.strict;
+  }
+
+  load();
+  $('fwv').textContent = FW.version;
+  syncFields();
+  renderAssess();
+  renderAll();
+  bind();
+  showTab(state.tab || 'assess');
+})();
+</script>
+</body>
+</html>

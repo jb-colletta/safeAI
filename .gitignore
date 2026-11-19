@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+
+# Real assessments describe your organization's weaknesses. Keep them private.
+assessment.yaml
+assessment.json
+report.md
+report.html
+plan.md
